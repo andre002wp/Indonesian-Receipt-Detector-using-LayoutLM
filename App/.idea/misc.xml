@@ -3,8 +3,12 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/activity_camera.xml" value="0.264" />
         <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/activity_main.xml" value="0.25416666666666665" />
+        <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/activity_scan.xml" value="0.25416666666666665" />
         <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/fragment_dashboard.xml" value="0.25416666666666665" />
+        <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/fragment_home.xml" value="0.23854166666666668" />
+        <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/menu/bottom_nav_menu.xml" value="0.23854166666666668" />
       </map>
     </option>
   </component>
