@@ -1,12 +1,19 @@
 package id.andre002wp.ReceiptScanner.ui.dashboard
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
+import androidx.camera.core.impl.utils.ContextUtil.getApplicationContext
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.websitebeaver.documentscanner.DocumentScanner
+import com.websitebeaver.documentscanner.constants.ResponseType
+import id.andre002wp.ReceiptScanner.R
 import id.andre002wp.ReceiptScanner.databinding.FragmentDashboardBinding
 
 
@@ -29,11 +36,18 @@ class DashboardFragment : Fragment() {
         _binding = FragmentDashboardBinding.inflate(inflater, container, false)
         val root: View = binding.root
         val media: Button = binding.btnMedia
+        val takephoto: Button = binding.btnPicture
 
         media.setOnClickListener{
-            Intent(context, camera::class.java).also {
-                startActivity(it)
-            }
+            val intent = Intent(context, scan_activity::class.java)
+            intent.putExtra("isPhoto",0)
+            startActivity(intent)
+        }
+
+        takephoto.setOnClickListener {
+            val intent = Intent(context, scan_activity::class.java)
+            intent.putExtra("isPhoto",1)
+            startActivity(intent)
         }
 
         return root

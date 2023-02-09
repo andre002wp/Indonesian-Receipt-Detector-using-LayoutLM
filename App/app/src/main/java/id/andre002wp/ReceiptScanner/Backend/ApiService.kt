@@ -19,7 +19,7 @@ interface ApiService {
 class FileUploadResponse(
     @field:SerializedName("data")
     @Expose
-    val data: MutableList<ListRekomendasiItem>,
+    val data: String,
 
     @field:SerializedName("error")
     val error: Boolean,
@@ -27,11 +27,3 @@ class FileUploadResponse(
     @field:SerializedName("message")
     val message: String
 )
-
-@Parcelize
-data class ListRekomendasiItem(
-    @SerializedName("foto")
-    @Expose
-    val foto: String,
-
-) : Parcelable
