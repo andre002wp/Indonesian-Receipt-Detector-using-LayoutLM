@@ -221,7 +221,7 @@ def process_image(model, processor,filepath = None, image = None):
         draw.rectangle(box, outline=label2color[predicted_label])
         draw.text((box[0]+10, box[1]-10), text=predicted_label, fill=label2color[predicted_label], font=font)
         
-    inf_img.save(os.path.join(os.path.dirname(DIR),filename+f"_{curtime[2]}-{curtime[1]}-{curtime[0]} '{curtime[3]}.{curtime[4]}.{curtime[5]}"+'.jpg'))
+    inf_img.save(os.path.join(os.path.dirname(DIR),"Result","Android",filename+f"_{curtime[2]}-{curtime[1]}-{curtime[0]} '{curtime[3]}.{curtime[4]}.{curtime[5]}"+'.jpg'))
 
     return inf_img,BeautifyInfo(imginfo)
 
