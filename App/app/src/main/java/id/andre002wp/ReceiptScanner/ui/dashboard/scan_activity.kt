@@ -137,6 +137,12 @@ class scan_activity : AppCompatActivity() {
                             response.message(),
                             Toast.LENGTH_SHORT
                         ).show()
+                        val scan_data = response.body()?.data
+                        Log.d("API", "onResponse: $scan_data")
+//                        Intent(this@scan_activity, Scan_Preview::class.java).also {
+//                            it.putExtra("result", scan_data)
+//                            startActivity(it)
+//                        }
                     } else {
                         Toast.makeText(
                             applicationContext,
