@@ -34,7 +34,7 @@ class Scan_Preview : AppCompatActivity() {
         var cancelbtn = binding.cancelBtn
         var addbtn = binding.addBtn
 
-        var store = intent.getStringExtra("store")
+        var store = intent.getStringExtra("store_name")
         var date = intent.getStringExtra("date")
         var time = intent.getStringExtra("time")
         var total = intent.getStringExtra("total")

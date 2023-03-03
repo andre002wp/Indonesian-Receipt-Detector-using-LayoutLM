@@ -1,5 +1,8 @@
 from flask import Flask
 from flask import request
+from flask import jsonify
+from flask import make_response
+from flask import request
 from transformers import AutoProcessor
 from transformers import AutoModelForTokenClassification
 from datasets import load_dataset
@@ -21,32 +24,21 @@ if DIR == "D:\Andre\TA\Indonesian-Receipt-Detector-using-LayoutLM":
 # flask run --host=0.0.0.0
 app = Flask(__name__)
 
-labels = ['Ignore',
- 'Store_name_value',
- 'Store_name_key',
- 'Store_addr_value',
- 'Store_addr_key',
- 'Tel_value',
- 'Tel_key',
- 'Date_value',
- 'Date_key',
- 'Time_value',
- 'Time_key',
- 'Prod_item_value',
- 'Prod_item_key',
- 'Prod_quantity_value',
- 'Prod_quantity_key',
- 'Prod_price_value',
- 'Prod_price_key',
- 'Subtotal_value',
- 'Subtotal_key',
- 'Tax_value',
- 'Tax_key',
- 'Tips_value',
- 'Tips_key',
- 'Total_value',
- 'Total_key',
- 'Others']
+labels = ['Ignore', 
+          'Store_name_value',
+          'Date_value',
+          'Time_value',
+          'Prod_item_key',
+          'Prod_item_value',
+          'Prod_quantity_key',
+          'Prod_quantity_value',
+          'Prod_price_key',
+          'Prod_price_value',
+          'Subtotal_key',
+          'Subtotal_value',
+          'Total_key',
+          'Total_value',
+          'Others']
 
 id2label = {v: k for v, k in enumerate(labels)}
 label2color = {
@@ -78,32 +70,44 @@ label2color = {
     "Total_value": 'blue'
   }
 
-model = AutoModelForTokenClassification.from_pretrained("Theivaprakasham/layoutlmv3-finetuned-wildreceipt")
-processor = AutoProcessor.from_pretrained("Theivaprakasham/layoutlmv3-finetuned-wildreceipt", apply_ocr=False)
+model = AutoModelForTokenClassification.from_pretrained(os.path.join(os.path.dirname(DIR),'Saved_model','all_data_4epochs'))
+processor = AutoProcessor.from_pretrained(os.path.join(os.path.dirname(DIR),'Saved_model','Processor','all_data_4epochs'), apply_ocr=False)
 ocr_agent = lp.GCVAgent.with_credential(os.path.join(os.path.dirname(DIR),'gcv_credential.json'),languages = ['id'])
 
 @app.route('/')
 def index():
-    inf_img,img_info = process_image(model, processor, filepath = os.path.join(os.path.dirname(DIR),'Nota_Segmented/20221123_230906.jpg'))
-    print(img_info)
+    # inf_img,img_info = process_image(model, processor, filepath = os.path.join(os.path.dirname(DIR),'Nota_Segmented/20221123_230906.jpg'))
     return "<p>Hello, World!</p>"
 
 @app.route('/detect', methods=['POST'])
 def detect():
-    data = json.loads(request.data)
-    bytearrimg = decodeB64(data)
-    byteimg = bytearray(bytearrimg)
-    pil_image = Image.open(io.BytesIO(byteimg))
-    cv_img = np.array(pil_image) 
-    # Convert RGB to BGR 
-    cv_img = cv_img[:, :, ::-1].copy()
+    try:
+        data = json.loads(request.data)
+        bytearrimg = decodeB64(data)
+        byteimg = bytearray(bytearrimg)
+        pil_image = Image.open(io.BytesIO(byteimg))
+        cv_img = np.array(pil_image) 
+        # Convert RGB to BGR 
+        cv_img = cv_img[:, :, ::-1].copy()
 
-    path = os.path.join(os.path.dirname(DIR),'android_img.jpg')
-    cv2.imwrite(path, cv_img)
+        path = os.path.join(os.path.dirname(DIR),'android_img.jpg')
+        cv2.imwrite(path, cv_img)
 
-    inf_img,img_info = process_image(model, processor,filepath = path)
-    print(img_info)
-    return "<p>detect</p>"
+        inf_img,img_info = process_image(model, processor,filepath = path)
+
+        # convert inf_img to base64 by using byte array
+        img_byte_arr = io.BytesIO()
+        inf_img.save(img_byte_arr, format='PNG')
+        img_byte_arr = img_byte_arr.getvalue()
+        
+        img_info['Image'] = base64.b64encode(img_byte_arr)
+        for key in img_info:
+            if key != 'Image':
+                print(key,":",img_info[key])
+
+        return successResponse(singleReceipt(img_info),"success")
+    except Exception as e:
+        return badRequest(e,"error")
 
 def decodeB64(data):
     image_64_decode = base64.b64decode(data) # base64.decode(image_64_encode)
@@ -173,7 +177,7 @@ def process_image(model, processor,filepath = None, image = None):
     imginfo['Date'] = []
     imginfo['Time'] = []
     imginfo["Products"] = {}
-    imginfo['Total'] =[]
+    imginfo['Total'] = {}
 
     if image_result is None:
         return None
@@ -220,10 +224,75 @@ def process_image(model, processor,filepath = None, image = None):
         checkPredictedLabels(imginfo,predicted_label,box,processor.tokenizer.decode(words))
         draw.rectangle(box, outline=label2color[predicted_label])
         draw.text((box[0]+10, box[1]-10), text=predicted_label, fill=label2color[predicted_label], font=font)
-        
+
+    # Save for future reference
     inf_img.save(os.path.join(os.path.dirname(DIR),"Result","Android",filename+f"_{curtime[2]}-{curtime[1]}-{curtime[0]} '{curtime[3]}.{curtime[4]}.{curtime[5]}"+'.jpg'))
 
-    return inf_img,BeautifyInfo(imginfo)
+    # Beautify the info
+    beautyinfo = BeautifyInfo(imginfo)
+
+    green_flag = checkGreenFlag(beautyinfo)
+    # if at least 1 product have parallel info of name, price and quantity then we can say that the info is correct if not
+    # then we try another method
+    if green_flag < 1:
+        pop_idx = []
+        for idx,prod_item in enumerate(beautyinfo["Products"].values()):
+            # if its not the first item
+            if idx > 0:
+                # if is have no name but has price and quantity
+                # print(f"if {len(prod_item['name'])} < 1 and {len(prod_item['quantity'])} > 1 and {len(prod_item['price'])} > 1:")
+                if len(prod_item["name"]) < 1 and len(prod_item['quantity']) > 0 and len(prod_item['price']) > 0:
+                    # then the name is the previous item
+                    beautyinfo["Products"][idx]["name"] = beautyinfo["Products"][idx-1]["name"]
+                    pop_idx.append(idx-1)
+        # remove the previous item
+        for idx in pop_idx:
+            beautyinfo["Products"].pop(idx)
+
+    # check again
+    green_flag = checkGreenFlag(beautyinfo)
+
+    # if still no green flag then we can't say that the info is correct
+    if green_flag < 1:
+        #raise error
+        raise Exception("The info is not correct")
+    else:
+        return inf_img,beautyinfo
+
+def checkGreenFlag(imginfo):
+    # additional check for the products
+    green_flag = 0
+    for prod_item in imginfo["Products"].values():
+        red_flag = 0
+        if len(prod_item["name"]) < 1:
+            red_flag+=1
+        if len(prod_item["price"]) < 1:
+            red_flag+=1
+        if len(prod_item["quantity"]) < 1:
+            red_flag+=1
+        # print("red :",red_flag)
+        # means at least 1 product has parallel info of name, price and quantity
+        if red_flag < 1:
+            green_flag+=1
+    return green_flag
+
+
+def checkGreenFlag(imginfo):
+    # additional check for the products
+    green_flag = 0
+    for prod_item in imginfo["Products"].values():
+        red_flag = 0
+        if len(prod_item["name"]) < 1:
+            red_flag+=1
+        if len(prod_item["price"]) < 1:
+            red_flag+=1
+        if len(prod_item["quantity"]) < 1:
+            red_flag+=1
+        # print("red :",red_flag)
+        # means at least 1 product has parallel info of name, price and quantity
+        if red_flag < 1:
+            green_flag+=1
+    return green_flag
 
 def checkPredictedLabels(info,predicted_labels,box,words):
     # middle point of the y axis
@@ -252,6 +321,29 @@ def checkPredictedLabels(info,predicted_labels,box,words):
                 tolerated_box = mid_y
     else:
         tolerated_box = mid_y
+
+    # check if the box is already in the info dict with some tolerance
+    if info["Total"].keys() is not None:
+        if len(info["Total"].keys()) < 1:
+            tolerated_total = mid_y
+
+        # add tolerance to the y axis
+        for key in info["Total"].keys():
+            
+            # adding for performance and easier debugging
+            if mid_y == key:
+                tolerated_total = mid_y
+                break
+
+            if mid_y < key+box_tolerance and mid_y > key-box_tolerance:
+                # print("tolerating: ", mid_y , " to ", key)
+                tolerated_total = key
+                break
+            else:
+                # print("not allowing: ", mid_y , " to ", key)
+                tolerated_total = mid_y
+    else:
+        tolerated_total = mid_y
         
     # addes the words to the right key in the info dict
     if predicted_labels == 'Date_value':
@@ -261,7 +353,10 @@ def checkPredictedLabels(info,predicted_labels,box,words):
     elif predicted_labels == 'Store_name_value':
         info["Store"].append(words)
     elif predicted_labels == 'Total_value':
-        info["Total"].append(words)   
+        if tolerated_total not in info["Total"].keys():
+            info["Total"][tolerated_total] = {"total":[]}
+        
+        info["Total"][tolerated_box]['total'].append(words)
     elif predicted_labels == 'Prod_item_value':
         if tolerated_box not in info["Products"].keys():
             info["Products"][tolerated_box] = {"name":[],"quantity":[],"price":[]}
@@ -280,18 +375,65 @@ def checkPredictedLabels(info,predicted_labels,box,words):
 
 def BeautifyInfo(imginfo):
     newinfo = {}
-    newinfo["Store"] = " ".join(imginfo["Store"])
-    newinfo["Date"] = " ".join(imginfo["Date"])
-    newinfo["Time"] = " ".join(imginfo["Time"])
-    newinfo["Total"] = " ".join(imginfo["Total"])
+    newinfo["Store"] = "".join(imginfo["Store"])
+    newinfo["Store"] = newinfo["Store"][1:]
+    newinfo["Date"] = "".join(imginfo["Date"])
+    newinfo["Date"] = newinfo["Date"][1:]
+    newinfo["Time"] = "".join(imginfo["Time"])
+    newinfo["Time"] = newinfo["Time"][1:]
+    if len(imginfo["Total"].keys()) > 0:
+        newinfo["Total"] = "".join(list(imginfo["Total"].values())[0]['total'])
+        newinfo["Total"] = newinfo["Total"][1:]
+    else:
+        newinfo["Total"] = ""
     newinfo["Products"] = {}
     for idx,item in enumerate(imginfo["Products"].values()):
         newinfo["Products"][idx] = {}
         newinfo["Products"][idx]["name"] = "".join(item["name"])
+        newinfo["Products"][idx]["name"] = newinfo["Products"][idx]["name"][1:]
         newinfo["Products"][idx]["quantity"] = "".join(item["quantity"])
+        newinfo["Products"][idx]["quantity"] = newinfo["Products"][idx]["quantity"][1:]
         newinfo["Products"][idx]["price"] = "".join(item["price"])
+        newinfo["Products"][idx]["price"] = newinfo["Products"][idx]["price"][1:]
 
     return newinfo
+
+def singleReceipt(data):
+    #products integer formatting
+    products = data['Products'].copy()
+    for item in list(products.values()):
+        if len(item['price']) > 0:
+            item['price'] = int(item['price'].replace(',','').replace('.',''))
+        else:
+            item['price'] = 0
+        if len(item['quantity']) > 0:
+            item['quantity'] = int(item['quantity'].split('.')[0])
+        else:
+            item['quantity'] = 0
+
+    data = {
+        'store_name': data["Store"],
+        'date': data["Date"],
+        'time': data['Time'],
+        'total': data['Total'],
+        'products': list(products.values())
+        # 'gambar': data['Image']
+    }
+    return data
+
+def successResponse(values,message='success'):
+    res = {
+        'data' : values,
+        'message' : message
+    }
+    return make_response(jsonify(res), 200)
+
+def badRequest(values,message='error'):
+    res = {
+        'data' : values,
+        'message' : message
+    }
+    return make_response(jsonify(res), 400)
 
 if __name__ == '__main__':
     app.run(debug=True)

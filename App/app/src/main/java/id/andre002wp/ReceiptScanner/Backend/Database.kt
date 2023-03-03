@@ -2,7 +2,6 @@ package com.release.gfg1
 
 import android.content.ContentValues
 import android.content.Context
-import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.os.Parcelable
@@ -45,7 +44,7 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     }
 
     // This method is for adding data in our database
-    fun addReceipt(store : String,date : Date, total : Int, products : ArrayList<Product>){
+    fun addReceipt(store : String,date : String, time: String, total : Int, products : ArrayList<Product>){
 
         // below we are creating
         // a content values variable
@@ -53,8 +52,8 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
         // we are inserting our values
         Receipt.put(store_name, store)
-        Receipt.put(purchase_date, date.date.toString())
-        Receipt.put(purchase_time, date.time)
+        Receipt.put(purchase_date, date)
+        Receipt.put(purchase_time, time)
         Receipt.put(total_payment, total)
 
         // here we are creating a writable variable of our database
@@ -66,7 +65,7 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         val receipt_new_id = db.rawQuery("SELECT MAX(id_receipt) FROM " + RECEIPT, null)
 
         for (product in products) {
-            addProductsDetails(receipt_new_id.getInt(0), product.name, product.price, product.qty)
+            addProductsDetails(receipt_new_id.getInt(0), product.name, product.price, product.quantity)
         }
 
         // at last we are
@@ -93,7 +92,7 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         val receipt_new_id = db.rawQuery("SELECT MAX(id_receipt) FROM " + RECEIPT, null)
 
         for (product in receipt.products) {
-            addProductsDetails(receipt_new_id.getInt(0), product.name, product.price, product.qty)
+            addProductsDetails(receipt_new_id.getInt(0), product.name, product.price, product.quantity)
         }
 
         // at last we are
@@ -242,10 +241,10 @@ class Receipt(var id : Int, var store : String, var date : String, var time : St
 }
 
 @Parcelize
-class Product(var name: String, var price: Int, var qty: Int) : Parcelable {
+class Product(var name: String, var price: Int, var quantity: Int) : Parcelable {
 
     fun getQtyString() : String{
-        return qty.toString()
+        return quantity.toString()
     }
 
     fun getPriceString() : String{
@@ -265,7 +264,7 @@ class Product(var name: String, var price: Int, var qty: Int) : Parcelable {
     }
 
     fun setProductQty(qty : Int){
-        this.qty = qty
+        this.quantity = qty
     }
 
     fun setProductPrice(price : String){
@@ -273,7 +272,7 @@ class Product(var name: String, var price: Int, var qty: Int) : Parcelable {
     }
 
     fun setProductQty(qty : String){
-        this.qty = qty.toInt()
+        this.quantity = qty.toInt()
     }
 
     fun setProductPrice(price : Double){

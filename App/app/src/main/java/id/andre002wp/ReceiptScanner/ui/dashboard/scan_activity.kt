@@ -17,6 +17,7 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.drawable.toBitmap
+import com.release.gfg1.Product
 import com.websitebeaver.documentscanner.DocumentScanner
 import com.websitebeaver.documentscanner.constants.ResponseType
 import id.andre002wp.ReceiptScanner.Backend.ApiConfig.Companion.getApiService
@@ -134,19 +135,34 @@ class scan_activity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         Toast.makeText(
                             applicationContext,
-                            response.message(),
+                            "Success",
                             Toast.LENGTH_SHORT
                         ).show()
                         val scan_data = response.body()?.data
-                        Log.d("API", "onResponse: $scan_data")
-//                        Intent(this@scan_activity, Scan_Preview::class.java).also {
-//                            it.putExtra("result", scan_data)
-//                            startActivity(it)
-//                        }
+                        Log.d("API", scan_data!!?.store_name)
+                        Log.d("API", scan_data!!?.date)
+                        Log.d("API", scan_data!!?.time)
+                        Log.d("API", scan_data!!?.total)
+                        val products = ArrayList<Product>()
+                        for (i in scan_data!!?.products){
+                            val new_product = Product(i.name, i.price, i.quantity)
+                            products.add(new_product)
+                            Log.d("API", i.name)
+                            Log.d("API", i.price.toString())
+                            Log.d("API", i.quantity.toString())
+                        }
+                        Intent(this@scan_activity, Scan_Preview::class.java).also {
+                            it.putExtra("store_name", scan_data!!?.store_name)
+                            it.putExtra("date", scan_data!!?.date)
+                            it.putExtra("time", scan_data!!?.time)
+                            it.putExtra("total", scan_data!!?.total)
+                            it.putParcelableArrayListExtra("products", products)
+                            startActivity(it)
+                        }
                     } else {
                         Toast.makeText(
                             applicationContext,
-                            response.message(),
+                            "Failed",
                             Toast.LENGTH_SHORT
                         ).show()
                     }
