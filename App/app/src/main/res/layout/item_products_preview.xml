@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="60dp"
     android:orientation="vertical">
 
 
@@ -23,7 +23,7 @@
                 android:layout_width="100dp"
                 android:layout_height="wrap_content"
                 android:text="Product Name"
-                android:textSize="15sp"
+                android:textSize="13sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 

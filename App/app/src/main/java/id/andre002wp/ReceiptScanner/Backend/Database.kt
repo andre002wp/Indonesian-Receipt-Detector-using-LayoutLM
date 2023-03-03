@@ -76,6 +76,7 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     // This method is for adding data in our database
     fun addReceipt(receipt: Receipt){
         val Receipt = ContentValues()
+        var new_id = -1
 
         // we are inserting our values
         Receipt.put(store_name, receipt.getStoreName())
@@ -88,11 +89,22 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         val db = this.writableDatabase
 
         // all values are inserted into database
-        db.insert(RECEIPT, null, Receipt)
-        val receipt_new_id = db.rawQuery("SELECT MAX(id_receipt) FROM " + RECEIPT, null)
+        val adddb = db.insert(RECEIPT, null, Receipt)
+        Log.d("DB", "msg : "+adddb.toString())
+        if (adddb == -1L) {
+            Log.d("DB", "Inserting receipt failed")
+        } else{
+            Log.d("DB", "Inserting receipt success")
+        }
 
+        // get the id of the newly added receipt
+        val newReceiptCursor = db.rawQuery("SELECT MAX(id_receipt) FROM " + RECEIPT, null)
+        while (newReceiptCursor.moveToNext()){
+            new_id = newReceiptCursor.getInt(0)
+            Log.d("DB", "rec new id column hopefully_id : "+new_id.toString())
+        }
         for (product in receipt.products) {
-            addProductsDetails(receipt_new_id.getInt(0), product.name, product.price, product.quantity)
+            addProductsDetails(new_id, product.name, product.price, product.quantity)
         }
 
         // at last we are
@@ -104,18 +116,18 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
 
         // below we are creating
         // a content values variable
-        val product_val = ContentValues()
+        val productval = ContentValues()
 
         // we are inserting our values
-        product_val.put(receipt_id, r_id)
-        product_val.put(product_name, name)
-        product_val.put(product_sum_price, price)
-        product_val.put(product_quantity, qty)
+        productval.put(receipt_id, r_id)
+        productval.put(product_name, name)
+        productval.put(product_sum_price, price)
+        productval.put(product_quantity, qty)
 
         val db = this.writableDatabase
 
         // all values are inserted into database
-        db.insert(PRODUCTSDETAILS, null, product_val)
+        db.insert(PRODUCTSDETAILS, null, productval)
 
         db.close()
     }
@@ -134,10 +146,37 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
                 receipt.products.add(product)
             }
             receipts.add(receipt)
+            cursor2.close()
         }
         cursor.close()
         db.close()
         return receipts
+    }
+
+    fun updateReceipt(receipt: Receipt){
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(store_name, receipt.getStoreName())
+        values.put(purchase_date, receipt.getPurchaseDate())
+        values.put(purchase_time, receipt.getPurchaseTime())
+        values.put(total_payment, receipt.getTotalPayment())
+
+        // updating row
+        db.update(RECEIPT, values, id_receipt + " = ?",
+            arrayOf(receipt.id.toString()))
+        db.close()
+    }
+
+    fun deleteReceipt(id: Int){
+        val db = this.writableDatabase
+        val msg = db.delete(RECEIPT, id_receipt + " = ?",
+            arrayOf(id.toString()))
+        Log.d("DB", "deleting receipt with id $id msg :"+msg.toString())
+        // delete all products details
+        val msg2 = db.delete(PRODUCTSDETAILS, receipt_id + " = ?",
+            arrayOf(id.toString()))
+        Log.d("DB", "deleting attached products msg :"+msg2.toString())
+        db.close()
     }
 
     fun getReceipt(id : Int) : Receipt{
@@ -163,6 +202,7 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         // here we have defined variables for our database
 
         // below is variable for database name
+        // todo : change the database name
         private val DATABASE_NAME = "GEEKS_FOR_GEEKS"
 
         // below is the variable for database version
@@ -194,6 +234,10 @@ class Receipt(var id : Int, var store : String, var date : String, var time : St
         this.products.addAll(products)
     }
 
+    fun getID() : Int{
+        return id
+    }
+
     fun getStoreName() : String{
         return store
     }
@@ -206,8 +250,8 @@ class Receipt(var id : Int, var store : String, var date : String, var time : St
         return time
     }
 
-    fun getTotalPayment() : String{
-        return total.toString()
+    fun getTotalPayment() : Int{
+        return total
     }
 
     fun setStoreName(store : String){

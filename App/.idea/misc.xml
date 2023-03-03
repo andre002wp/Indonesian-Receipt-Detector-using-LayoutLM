@@ -3,10 +3,13 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout-w1240dp/content_scrolling.xml" value="0.26258503401360545" />
+        <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout-w936dp/content_scrolling.xml" value="0.15078125" />
         <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/activity_camera.xml" value="0.264" />
         <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/activity_main.xml" value="0.25416666666666665" />
         <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/activity_scan.xml" value="0.176" />
         <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/activity_scan_preview.xml" value="0.2" />
+        <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/content_scrolling.xml" value="0.20104166666666667" />
         <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/fragment_dashboard.xml" value="0.25416666666666665" />
         <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/fragment_history.xml" value="0.264" />
         <entry key="..\:/Andre/TA/Indonesian-Receipt-Detector-using-LayoutLM/App/app/src/main/res/layout/fragment_home.xml" value="0.23854166666666668" />

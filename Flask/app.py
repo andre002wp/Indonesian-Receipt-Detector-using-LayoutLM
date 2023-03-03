@@ -255,6 +255,7 @@ def process_image(model, processor,filepath = None, image = None):
     # if still no green flag then we can't say that the info is correct
     if green_flag < 1:
         #raise error
+        print(beautyinfo)
         raise Exception("The info is not correct")
     else:
         return inf_img,beautyinfo
@@ -298,7 +299,7 @@ def checkPredictedLabels(info,predicted_labels,box,words):
     # middle point of the y axis
     mid_y = int(box[1]+(box[3]-box[1]))
 
-    box_tolerance = 10 # 10 pixels ?
+    box_tolerance = 30 # 10 pixels ?
     # check if the box is already in the info dict with some tolerance
     if info["Products"].keys() is not None:
         if len(info["Products"].keys()) < 1:
@@ -411,11 +412,15 @@ def singleReceipt(data):
         else:
             item['quantity'] = 0
 
+    strtotal = data['Total'].replace(',','-').replace('.','-')
+    total = "".join(strtotal.split('-')[0])+ strtotal.split('-')[1][:3]
+    total = int(total)
+
     data = {
         'store_name': data["Store"],
         'date': data["Date"],
         'time': data['Time'],
-        'total': data['Total'],
+        'total': total,
         'products': list(products.values())
         # 'gambar': data['Image']
     }

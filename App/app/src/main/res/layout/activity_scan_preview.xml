@@ -36,7 +36,7 @@
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="50dp"
                     android:hint="Nama Toko"
                     app:endIconMode="clear_text"
                     android:layout_marginBottom="@dimen/activity_vertical_margin">
@@ -44,24 +44,24 @@
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/store_name"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="50dp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="50dp"
                     android:hint="Date"
                     android:layout_marginBottom="@dimen/activity_vertical_margin">
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/Date"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="50dp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="50dp"
                     android:hint="Waktu"
                     app:endIconMode="clear_text"
                     android:layout_marginBottom="@dimen/activity_vertical_margin">
@@ -69,12 +69,12 @@
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/Time"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="50dp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_height="50dp"
                     android:hint="Total Belanja"
                     app:endIconMode="clear_text"
                     android:layout_marginBottom="@dimen/activity_vertical_margin">
@@ -82,7 +82,7 @@
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/Total"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="50dp" />
                 </com.google.android.material.textfield.TextInputLayout>
 
             </LinearLayout>

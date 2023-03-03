@@ -12,6 +12,4 @@ class HistoryViewModel : ViewModel() {
     val text: LiveData<String> = _text
 
 
-
-
 }

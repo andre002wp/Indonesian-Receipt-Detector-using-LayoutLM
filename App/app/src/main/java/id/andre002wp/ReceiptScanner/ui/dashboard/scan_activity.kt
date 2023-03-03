@@ -142,7 +142,7 @@ class scan_activity : AppCompatActivity() {
                         Log.d("API", scan_data!!?.store_name)
                         Log.d("API", scan_data!!?.date)
                         Log.d("API", scan_data!!?.time)
-                        Log.d("API", scan_data!!?.total)
+                        Log.d("API", scan_data!!?.total.toString())
                         val products = ArrayList<Product>()
                         for (i in scan_data!!?.products){
                             val new_product = Product(i.name, i.price, i.quantity)

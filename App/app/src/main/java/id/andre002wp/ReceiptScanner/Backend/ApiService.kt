@@ -45,7 +45,7 @@ data class ReceiptScanResponse(
 
     @SerializedName("total")
     @Expose
-    val total: String,
+    val total: Int,
 
     @SerializedName("products")
     @Expose
