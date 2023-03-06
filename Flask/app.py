@@ -16,6 +16,7 @@ import numpy as np
 import base64
 import io
 import time
+import regex as re
 
 DIR = os.getcwd()
 if DIR == "D:\Andre\TA\Indonesian-Receipt-Detector-using-LayoutLM":
@@ -63,12 +64,20 @@ label2color = {
     "Tel_key": 'red',
     "Tel_value": 'green',
     "Time_key": 'red',
-    "Time_value": 'green',
+    "Time_value": 'blue',
     "Tips_key": 'red',
     "Tips_value": 'green',
     "Total_key": 'red',
-    "Total_value": 'blue'
+    "Total_value": 'red'
   }
+
+IMPORTANT_LABELS = ['Store_name_value',
+                    'Date_value',
+                    'Time_value',
+                    'Prod_item_value',
+                    'Prod_quantity_value',
+                    'Prod_price_value',
+                    'Total_value']
 
 model = AutoModelForTokenClassification.from_pretrained(os.path.join(os.path.dirname(DIR),'Saved_model','all_data_4epochs'))
 processor = AutoProcessor.from_pretrained(os.path.join(os.path.dirname(DIR),'Saved_model','Processor','all_data_4epochs'), apply_ocr=False)
@@ -95,17 +104,14 @@ def detect():
 
         inf_img,img_info = process_image(model, processor,filepath = path)
 
-        # convert inf_img to base64 by using byte array
         img_byte_arr = io.BytesIO()
         inf_img.save(img_byte_arr, format='PNG')
         img_byte_arr = img_byte_arr.getvalue()
-        
-        img_info['Image'] = base64.b64encode(img_byte_arr)
         for key in img_info:
             if key != 'Image':
                 print(key,":",img_info[key])
 
-        return successResponse(singleReceipt(img_info),"success")
+        return successResponse(singleReceipt(img_info),img_byte_arr,"success")
     except Exception as e:
         return badRequest(e,"error")
 
@@ -222,8 +228,9 @@ def process_image(model, processor,filepath = None, image = None):
     for prediction, box, words in zip(true_predictions, true_boxes, words_decoded):
         predicted_label = prediction
         checkPredictedLabels(imginfo,predicted_label,box,processor.tokenizer.decode(words))
-        draw.rectangle(box, outline=label2color[predicted_label])
-        draw.text((box[0]+10, box[1]-10), text=predicted_label, fill=label2color[predicted_label], font=font)
+        if predicted_label in IMPORTANT_LABELS:
+            draw.rectangle(box, outline=label2color[predicted_label])
+            draw.text((box[0]+10, box[1]-10), text=predicted_label, fill=label2color[predicted_label], font=font)
 
     # Save for future reference
     inf_img.save(os.path.join(os.path.dirname(DIR),"Result","Android",filename+f"_{curtime[2]}-{curtime[1]}-{curtime[0]} '{curtime[3]}.{curtime[4]}.{curtime[5]}"+'.jpg'))
@@ -233,18 +240,38 @@ def process_image(model, processor,filepath = None, image = None):
 
     green_flag = checkGreenFlag(beautyinfo)
     # if at least 1 product have parallel info of name, price and quantity then we can say that the info is correct if not
-    # then we try another method
+    # then we try the 2nd method
     if green_flag < 1:
         pop_idx = []
         for idx,prod_item in enumerate(beautyinfo["Products"].values()):
             # if its not the first item
             if idx > 0:
-                # if is have no name but has price and quantity
+                # if it have no name but has price and quantity
                 # print(f"if {len(prod_item['name'])} < 1 and {len(prod_item['quantity'])} > 1 and {len(prod_item['price'])} > 1:")
                 if len(prod_item["name"]) < 1 and len(prod_item['quantity']) > 0 and len(prod_item['price']) > 0:
                     # then the name is the previous item
                     beautyinfo["Products"][idx]["name"] = beautyinfo["Products"][idx-1]["name"]
                     pop_idx.append(idx-1)
+        # remove the previous item
+        for idx in pop_idx:
+            beautyinfo["Products"].pop(idx)
+
+    # check again
+    green_flag = checkGreenFlag(beautyinfo)
+
+    # if still no green flag then we try the 3rd method
+    if green_flag < 1:
+        pop_idx = []
+        for idx,prod_item in enumerate(beautyinfo["Products"].values()):
+            # if its not the first item
+            if idx > 0:
+                # if it has name but dont have price and quantity
+                # print(f"if {len(prod_item['name'])} < 1 and {len(prod_item['quantity'])} > 1 and {len(prod_item['price'])} > 1:")
+                if len(prod_item["name"]) > 0 and len(prod_item['quantity']) < 1 and len(prod_item['price']) < 1:
+                    if len(beautyinfo["Products"][idx-1]["name"]) < 1 and len(beautyinfo["Products"][idx-1]['quantity']) > 0 and len(beautyinfo["Products"][idx-1]['price']) > 0:
+                        # then the name is the previous item
+                        beautyinfo["Products"][idx]["name"] = beautyinfo["Products"][idx-1]["name"]
+                        pop_idx.append(idx-1)
         # remove the previous item
         for idx in pop_idx:
             beautyinfo["Products"].pop(idx)
@@ -299,7 +326,7 @@ def checkPredictedLabels(info,predicted_labels,box,words):
     # middle point of the y axis
     mid_y = int(box[1]+(box[3]-box[1]))
 
-    box_tolerance = 30 # 10 pixels ?
+    box_tolerance = abs(int(box[3]-box[1])) # 10 pixels ? | auto tolerance
     # check if the box is already in the info dict with some tolerance
     if info["Products"].keys() is not None:
         if len(info["Products"].keys()) < 1:
@@ -382,11 +409,8 @@ def BeautifyInfo(imginfo):
     newinfo["Date"] = newinfo["Date"][1:]
     newinfo["Time"] = "".join(imginfo["Time"])
     newinfo["Time"] = newinfo["Time"][1:]
-    if len(imginfo["Total"].keys()) > 0:
-        newinfo["Total"] = "".join(list(imginfo["Total"].values())[0]['total'])
-        newinfo["Total"] = newinfo["Total"][1:]
-    else:
-        newinfo["Total"] = ""
+    newinfo["Total"] = "".join(list(imginfo["Total"].values())[0]['total'])
+    newinfo["Total"] = newinfo["Total"][1:]
     newinfo["Products"] = {}
     for idx,item in enumerate(imginfo["Products"].values()):
         newinfo["Products"][idx] = {}
@@ -396,6 +420,36 @@ def BeautifyInfo(imginfo):
         newinfo["Products"][idx]["quantity"] = newinfo["Products"][idx]["quantity"][1:]
         newinfo["Products"][idx]["price"] = "".join(item["price"])
         newinfo["Products"][idx]["price"] = newinfo["Products"][idx]["price"][1:]
+
+    datetime_regex = [
+        r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-2020-12:00
+        r"^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})-([0-9]{1,2}:[0-9]{1,2})", # 2020-01-01-12:00
+        r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-20-12:00
+    ]
+    datetime_str = newinfo['Date']+"-"+newinfo['Time']
+    datetime_str = datetime_str.replace("/","-").replace(".","-")
+    datetime_str
+
+    ## beautify date and time
+    for idx,regex in enumerate(datetime_regex):
+        match = re.match(regex,datetime_str)
+        if match:
+            match_idx = idx
+            break
+        else:
+            match_idx = -1
+
+    if match_idx == 0:
+        newinfo['Date'] = match.group(1)+"-"+match.group(2)+"-"+match.group(3)
+        newinfo['Time'] = match.group(4)
+    elif match_idx == 1:    
+        newinfo['Date'] = match.group(3)+"-"+match.group(2)+"-"+match.group(1)
+        newinfo['Time'] = match.group(4)
+    elif match_idx == 2:
+        newinfo['Date'] = match.group(1)+"-"+match.group(2)+"-20"+match.group(3)
+        newinfo['Time'] = match.group(4)
+    else:
+        print("No match found")
 
     return newinfo
 
@@ -412,9 +466,21 @@ def singleReceipt(data):
         else:
             item['quantity'] = 0
 
-    strtotal = data['Total'].replace(',','-').replace('.','-')
-    total = "".join(strtotal.split('-')[0])+ strtotal.split('-')[1][:3]
-    total = int(total)
+    try:
+        #total integer formatting
+        strtotal = data['Total'].replace(',','-').replace('.','-')
+        total = "".join(strtotal.split('-')[0])+ strtotal.split('-')[1][:3]
+        total = int(total)
+    except:
+        try:
+            if type(data['Total']) == str:
+                total = int(total)
+            else:
+                total = data['Total']
+        except:
+            total = data['Total']
+                
+            
 
     data = {
         'store_name': data["Store"],
@@ -422,13 +488,14 @@ def singleReceipt(data):
         'time': data['Time'],
         'total': total,
         'products': list(products.values())
-        # 'gambar': data['Image']
     }
     return data
 
-def successResponse(values,message='success'):
+def successResponse(values,image,message='success'):
+    # can only concatenate str (not "bytes") to str
     res = {
         'data' : values,
+        'image' : base64.b64encode(image).decode('utf-8'),
         'message' : message
     }
     return make_response(jsonify(res), 200)

@@ -160,11 +160,16 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         values.put(purchase_date, receipt.getPurchaseDate())
         values.put(purchase_time, receipt.getPurchaseTime())
         values.put(total_payment, receipt.getTotalPayment())
-
+        Log.d("DB", "updating receipt with id : "+receipt.id.toString())
+        Log.d("DB", "store_name : "+receipt.getStoreName())
+        Log.d("DB", "purchase_date : "+receipt.getPurchaseDate())
+        Log.d("DB", "purchase_time : "+receipt.getPurchaseTime())
+        Log.d("DB", "total_payment : "+receipt.getTotalPayment().toString())
         // updating row
-        db.update(RECEIPT, values, id_receipt + " = ?",
+        val msg = db.update(RECEIPT, values, id_receipt + " = ?",
             arrayOf(receipt.id.toString()))
         db.close()
+        Log.d("DB", "msg : "+msg.toString())
     }
 
     fun deleteReceipt(id: Int){

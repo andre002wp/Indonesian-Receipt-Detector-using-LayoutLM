@@ -32,6 +32,8 @@ import java.io.File
 
 class scan_activity : AppCompatActivity() {
     companion object {
+        lateinit var result_bitmap: Bitmap
+        fun isPersonInitialized(): Boolean = ::result_bitmap.isInitialized
         const val CAMERA_X_RESULT = 200
 
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
@@ -40,7 +42,6 @@ class scan_activity : AppCompatActivity() {
 
     private lateinit var croppedImageView: ImageView
     private lateinit var btn_scan: Button
-    private lateinit var result_bitmap:Bitmap
 
     private val documentScanner = DocumentScanner(
         this,
@@ -65,6 +66,7 @@ class scan_activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scan)
+        isPersonInitialized()
 
         // cropped image
         croppedImageView = findViewById(R.id.cropped_image_view)
@@ -139,24 +141,27 @@ class scan_activity : AppCompatActivity() {
                             Toast.LENGTH_SHORT
                         ).show()
                         val scan_data = response.body()?.data
-                        Log.d("API", scan_data!!?.store_name)
-                        Log.d("API", scan_data!!?.date)
-                        Log.d("API", scan_data!!?.time)
-                        Log.d("API", scan_data!!?.total.toString())
+//                        Log.d("API", scan_data!!?.store_name)
+//                        Log.d("API", scan_data!!?.date)
+//                        Log.d("API", scan_data!!?.time)
+//                        Log.d("API", scan_data!!?.total.toString())
                         val products = ArrayList<Product>()
                         for (i in scan_data!!?.products){
                             val new_product = Product(i.name, i.price, i.quantity)
                             products.add(new_product)
-                            Log.d("API", i.name)
-                            Log.d("API", i.price.toString())
-                            Log.d("API", i.quantity.toString())
+//                            Log.d("API", i.name)
+//                            Log.d("API", i.price.toString())
+//                            Log.d("API", i.quantity.toString())
                         }
+                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
+                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
                         Intent(this@scan_activity, Scan_Preview::class.java).also {
+                            it.putExtra("editflag", false)
                             it.putExtra("store_name", scan_data!!?.store_name)
                             it.putExtra("date", scan_data!!?.date)
                             it.putExtra("time", scan_data!!?.time)
                             it.putExtra("total", scan_data!!?.total)
-                            it.putParcelableArrayListExtra("products", products)
+                            it.putExtra("products", products)
                             startActivity(it)
                         }
                     } else {

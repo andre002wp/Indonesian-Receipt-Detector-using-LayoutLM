@@ -1,19 +1,19 @@
 package id.andre002wp.ReceiptScanner.ui.dashboard
 
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Parcelable
+import android.util.Base64
 import android.util.Log
-import com.google.android.material.appbar.CollapsingToolbarLayout
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.snackbar.Snackbar
 import com.release.gfg1.DBHelper
 import com.release.gfg1.Product
 import com.release.gfg1.Receipt
-import id.andre002wp.ReceiptScanner.R
 import id.andre002wp.ReceiptScanner.Utils.ProductAdapter
 import id.andre002wp.ReceiptScanner.databinding.ActivityScanPreviewBinding
+import java.io.ByteArrayOutputStream
 
 class Scan_Preview : AppCompatActivity() {
 
@@ -32,6 +32,7 @@ class Scan_Preview : AppCompatActivity() {
         var time_holder = binding.Time
         var total_holder = binding.Total
         var products_holder = binding.rvProductsPreview
+        var imageholder = binding.imageViewReceipt
 
         var savebtn = binding.saveBtn
         var cancelbtn = binding.cancelBtn
@@ -45,9 +46,21 @@ class Scan_Preview : AppCompatActivity() {
 
         if (intent.hasExtra("editflag")){
             this.editflag = intent.getBooleanExtra("editflag",false)
+        }
+
+        if (intent.hasExtra("id")){
             this.id = intent.getIntExtra("id",-1)
             Log.d("DB","Edit Receipt : $id with product size ${products?.size}")
         }
+
+        // get image from scan activity
+        if (scan_activity.isPersonInitialized()){
+            if (this.editflag == false){
+                val image = scan_activity.result_bitmap
+                imageholder.setImageBitmap(image)
+            }
+        }
+
 
         store_holder.setText(store)
         date_holder.setText(date)
@@ -74,17 +87,32 @@ class Scan_Preview : AppCompatActivity() {
 
         savebtn.setOnClickListener {
             //add new receipt to database
-            if (store != null && date != null && time != null && total != -1 && products.size > 0) {
+            val final_store = store_holder.text.toString()
+            val final_date = date_holder.text.toString()
+            val final_time = time_holder.text.toString()
+            val final_total = total_holder.text.toString().toInt()
+
+            if (final_store.equals("")){Log.d("DB","Store is empty")}
+            if (final_date.equals("")){Log.d("DB","Date is empty")}
+            if (final_time.equals("")){Log.d("DB","Time is empty")}
+            if (final_total < 1){Log.d("DB","Total is empty")}
+
+            if (!final_store.equals("") && !final_date.equals("") && !final_time.equals("") && final_total > 0 && products.size > 0) {
                 if (editflag == true){
-                    val new_receipt = Receipt(id,store, date, time, total, products)
+                    val new_receipt = Receipt(id,final_store,final_date,final_time,final_total,products)
                     val db = DBHelper(this, null)
                     db.updateReceipt(new_receipt)
                 }
                 else {
-                    val new_receipt = Receipt(0, store, date, time, total, products)
+                    val new_receipt = Receipt(0, final_store, final_date, final_time, final_total, products)
                     val db = DBHelper(this, null)
                     db.addReceipt(new_receipt)
                 }
+                finish()
+            }
+            else{
+                Snackbar.make(binding.root, "Please fill all the fields", Snackbar.LENGTH_LONG)
+                    .setAction("canceling", null).show()
             }
         }
     }
