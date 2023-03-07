@@ -149,12 +149,13 @@ class scan_activity : AppCompatActivity() {
                         for (i in scan_data!!?.products){
                             val new_product = Product(i.name, i.price, i.quantity)
                             products.add(new_product)
-//                            Log.d("API", i.name)
-//                            Log.d("API", i.price.toString())
-//                            Log.d("API", i.quantity.toString())
+                            Log.d("API", i.name)
+                            Log.d("API", i.price.toString())
+                            Log.d("API", i.quantity.toString())
                         }
-                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
-                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
+                        Log.d("API", response.body()?.image.toString())
+//                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
+//                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
                         Intent(this@scan_activity, Scan_Preview::class.java).also {
                             it.putExtra("editflag", false)
                             it.putExtra("store_name", scan_data!!?.store_name)
@@ -164,10 +165,11 @@ class scan_activity : AppCompatActivity() {
                             it.putExtra("products", products)
                             startActivity(it)
                         }
+                        finish()
                     } else {
                         Toast.makeText(
                             applicationContext,
-                            "Failed",
+                            response.message().toString(),
                             Toast.LENGTH_SHORT
                         ).show()
                     }

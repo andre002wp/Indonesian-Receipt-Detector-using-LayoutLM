@@ -1,5 +1,6 @@
 package id.andre002wp.ReceiptScanner.ui.dashboard
 
+import android.content.Intent
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Parcelable
@@ -20,6 +21,7 @@ class Scan_Preview : AppCompatActivity() {
     private lateinit var binding: ActivityScanPreviewBinding
     private var editflag = false
     private var id = -1
+    private lateinit var productAll : ArrayList<Product>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +44,10 @@ class Scan_Preview : AppCompatActivity() {
         var date = intent.getStringExtra("date")
         var time = intent.getStringExtra("time")
         var total = intent.getIntExtra("total",-1)
-        val products = intent.getParcelableArrayListExtra<Parcelable>("products")
+
+        // get product and product as filter
+        productAll = intent.getParcelableArrayListExtra<Parcelable>("products") as ArrayList<Product>
+        val products = productAll
 
         if (intent.hasExtra("editflag")){
             this.editflag = intent.getBooleanExtra("editflag",false)
@@ -61,16 +66,21 @@ class Scan_Preview : AppCompatActivity() {
             }
         }
 
-
         store_holder.setText(store)
         date_holder.setText(date)
         time_holder.setText(time)
         total_holder.setText(total.toString())
 
         // create product adapter and set data to adapter
-        products_holder.adapter = ProductAdapter(products as ArrayList<Product>)
+        products_holder.adapter = ProductAdapter(products)
         // set adapter to recycler view
         products_holder.layoutManager = LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false)
+
+        addbtn.setOnClickListener{
+            var addproduct = Product("",0,0)
+            products.add(addproduct)
+            products_holder.adapter?.notifyDataSetChanged()
+        }
 
         cancelbtn.setOnClickListener {
             if(editflag == true){

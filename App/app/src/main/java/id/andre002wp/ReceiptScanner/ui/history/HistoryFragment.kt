@@ -12,6 +12,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.release.gfg1.DBHelper
@@ -22,6 +23,7 @@ import id.andre002wp.ReceiptScanner.Utils.ProductAdapter
 import id.andre002wp.ReceiptScanner.Utils.ReceiptAdapter.ReceiptAdapter
 import id.andre002wp.ReceiptScanner.databinding.FragmentHistoryBinding
 import id.andre002wp.ReceiptScanner.ui.dashboard.Scan_Preview
+import java.text.SimpleDateFormat
 import java.util.*
 
 class HistoryFragment : Fragment() {
@@ -31,6 +33,9 @@ class HistoryFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
+    lateinit var receipts : ArrayList<Receipt>
+    lateinit var startDateHolder : TextView
+    lateinit var endDateHolder : TextView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,11 +50,12 @@ class HistoryFragment : Fragment() {
 
         var dateLayout: ConstraintLayout = binding.root.findViewById(R.id.dateLayout)
 
-        var startDateHolder : TextView = binding.root.findViewById(R.id.startDate)
+        startDateHolder = binding.root.findViewById(R.id.startDate)
         startDateHolder.text = ""
-        var endDateHolder : TextView = binding.root.findViewById(R.id.endDate)
+        endDateHolder = binding.root.findViewById(R.id.endDate)
         endDateHolder.text = ""
 
+        var textTotal : TextView = binding.root.findViewById(R.id.totalsum)
 
         // value for calendar
         val today = MaterialDatePicker.todayInUtcMilliseconds()
@@ -70,10 +76,16 @@ class HistoryFragment : Fragment() {
                 .setEnd(decThisYear)
 
         var products_holder = binding.root.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rv_history)
-
-        // get data from database
         val dbrev = DBHelper(this.requireContext(), null)
-        val receipts = dbrev.getallReceipts()
+
+        if (startDateHolder.text.toString().equals("")){
+            // get data from database
+            receipts = dbrev.getallReceipts()
+        }
+        else{
+            receipts = dbrev.getReceiptbyDate(startDateHolder.text.toString(), endDateHolder.text.toString())
+        }
+
         Log.d("DB", "receipts size: ${receipts.size}")
         // create product adapter and set data to adapter
         products_holder.adapter = ReceiptAdapter(receipts)
@@ -82,32 +94,65 @@ class HistoryFragment : Fragment() {
 
         dateLayout.setOnClickListener {
 
-            if(startDateHolder.text.equals("") && endDateHolder.text.equals("") ){
-                val dateRangePicker =
-                    MaterialDatePicker.Builder.dateRangePicker()
-                        .setTitleText("Select dates")
-                        .setSelection(androidx.core.util.Pair(
-                            MaterialDatePicker.thisMonthInUtcMilliseconds(),
-                            MaterialDatePicker.todayInUtcMilliseconds())
-                        )
-                        .build()
-                dateRangePicker.addOnPositiveButtonClickListener {
-                    // Respond to positive button click.
-                    Log.d("HistoryFragment", dateRangePicker.headerText.split(" – ")[1])
-                    startDateHolder.text = dateRangePicker.headerText.split(" – ")[0]
-                    endDateHolder.text = dateRangePicker.headerText.split(" – ")[1]
-                }
+            val dateRangePicker =
+                MaterialDatePicker.Builder.dateRangePicker()
+                    .setTitleText("Select dates")
+                    .setSelection(androidx.core.util.Pair(
+                        MaterialDatePicker.thisMonthInUtcMilliseconds(),
+                        MaterialDatePicker.todayInUtcMilliseconds())
+                    )
+                    .build()
+            dateRangePicker.addOnPositiveButtonClickListener {
+                // Respond to positive button click.
+                val dateformat = SimpleDateFormat("yyyy-MM-dd")
 
-                dateRangePicker.show(parentFragmentManager, "StartDate")
-                Log.d("HistoryFragment", "Date already selected")
+                val startDate = dateformat.format(Date(it.first)).toString()
+                val endDate = dateformat.format(Date(it.second)).toString()
+                startDateHolder.text = startDate
+                endDateHolder.text = endDate
+                Log.d("DB", "startDate: $startDate")
+                Log.d("DB", "endDate: $endDate")
+                getReceiptsByDate(startDate, endDate, products_holder, textTotal)
             }
-            else{
-                Log.d("HistoryFragment", "test")
-            }
+
+            dateRangePicker.show(parentFragmentManager, "StartDate")
+            Log.d("HistoryFragment", "Date already selected")
         }
 
-
         return root
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val dbrev = DBHelper(this.requireContext(), null)
+        if (startDateHolder.text.toString().equals("")){
+            // get data from database
+            receipts = dbrev.getallReceipts()
+        }
+        else{
+            receipts = dbrev.getReceiptbyDate(startDateHolder.text.toString(), endDateHolder.text.toString())
+        }
+    }
+
+    fun getReceiptsByDate(startDate: String, endDate: String,products_holder: RecyclerView, total_text:TextView): MutableList<Receipt> {
+        val dbrev = DBHelper(this.requireContext(), null)
+        val receipts = dbrev.getReceiptbyDate(startDate, endDate)
+        updateTotal(total_text, receipts)
+        updateAdapter(products_holder, receipts)
+        return receipts
+    }
+
+    fun updateTotal(textTotal: TextView, receipts: MutableList<Receipt>){
+        var total = 0
+        for(receipt in receipts){
+            total += receipt.total
+        }
+        textTotal.text = "Rp. $total"
+    }
+
+    fun updateAdapter(products_holder: androidx.recyclerview.widget.RecyclerView, receipts: MutableList<Receipt>){
+        products_holder.adapter = ReceiptAdapter(receipts as ArrayList<Receipt>)
+        products_holder.layoutManager = LinearLayoutManager(this.requireContext(), LinearLayoutManager.VERTICAL, false)
     }
 
     override fun onDestroyView() {

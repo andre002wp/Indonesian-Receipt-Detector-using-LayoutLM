@@ -4,6 +4,8 @@ import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Filter
+import android.widget.Filterable
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
@@ -13,7 +15,9 @@ import id.andre002wp.ReceiptScanner.R
 import id.andre002wp.ReceiptScanner.Utils.ProductAdapter
 import id.andre002wp.ReceiptScanner.ui.dashboard.Scan_Preview
 
-class ReceiptAdapter(private val dataSet: ArrayList<Receipt>) : RecyclerView.Adapter<ReceiptAdapter.ViewHolder>() {
+class ReceiptAdapter(private val dataSet: ArrayList<Receipt>) : RecyclerView.Adapter<ReceiptAdapter.ViewHolder>(),
+    Filterable {
+    private var receiptListFull: ArrayList<Receipt> = ArrayList(dataSet)
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         // item_products_preview
@@ -73,4 +77,34 @@ class ReceiptAdapter(private val dataSet: ArrayList<Receipt>) : RecyclerView.Ada
     public interface editReceiptListener {
         fun onItemClick(item: Receipt)
     }
+
+    override fun getFilter(): Filter {
+        return receiptFilter
+    }
+
+    private val receiptFilter: Filter = object : Filter() {
+        override fun performFiltering(constraint: CharSequence?): FilterResults {
+            val filteredList: ArrayList<Receipt> = ArrayList()
+            if (constraint == null || constraint.length == 0) {
+                filteredList.addAll(receiptListFull)
+            } else {
+                val filterPattern = constraint.toString().toLowerCase().trim { it <= ' ' }
+                for (item in receiptListFull) {
+                    if (item.getStoreName().toLowerCase().contains(filterPattern)) {
+                        filteredList.add(item)
+                    }
+                }
+            }
+            val results = FilterResults()
+            results.values = filteredList
+            return results
+        }
+
+        override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+            dataSet.clear()
+            dataSet.addAll(results?.values as ArrayList<Receipt>)
+            notifyDataSetChanged()
+        }
+    }
 }
+

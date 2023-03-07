@@ -112,26 +112,6 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         db.close()
     }
 
-    fun addProductsDetails(r_id : Int, name : String, price : Int, qty : Int){
-
-        // below we are creating
-        // a content values variable
-        val productval = ContentValues()
-
-        // we are inserting our values
-        productval.put(receipt_id, r_id)
-        productval.put(product_name, name)
-        productval.put(product_sum_price, price)
-        productval.put(product_quantity, qty)
-
-        val db = this.writableDatabase
-
-        // all values are inserted into database
-        db.insert(PRODUCTSDETAILS, null, productval)
-
-        db.close()
-    }
-
     fun getallReceipts() : ArrayList<Receipt>{
         val receipts = ArrayList<Receipt>()
         val db = this.readableDatabase
@@ -139,6 +119,60 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         while (cursor.moveToNext()){
             val receipt = Receipt(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getInt(4))
 
+            // get all details for the receipt
+            val cursor2 = db.rawQuery("SELECT * FROM " + PRODUCTSDETAILS + " WHERE " + receipt_id + " = " + receipt.id, null)
+            while (cursor2.moveToNext()){
+                val product = Product(cursor2.getString(2), cursor2.getInt(4), cursor2.getInt(3))
+                receipt.products.add(product)
+            }
+            receipts.add(receipt)
+            cursor2.close()
+        }
+        cursor.close()
+        db.close()
+        return receipts
+    }
+
+    fun getReceipt(id : Int) : Receipt{
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM " + RECEIPT + " WHERE " + id_receipt + " = " + id, null)
+        cursor.moveToFirst()
+        val receipt = Receipt(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getInt(4))
+        // get all details for the receipt
+        val cursor2 = db.rawQuery("SELECT * FROM " + PRODUCTSDETAILS + " WHERE " + receipt_id + " = " + id, null)
+        while (cursor2.moveToNext()){
+            val product = Product(cursor2.getString(2), cursor2.getInt(4), cursor2.getInt(3))
+            receipt.products.add(product)
+        }
+
+        Log.d("getReceipt", "Receipt"+receipt.getStoreName()+" has total of"+receipt.products.size+" products")
+        cursor.close()
+        db.close()
+        return receipt
+    }
+
+    fun getReceiptbyDate(date1 : String,date2 :String) : ArrayList<Receipt>{
+        val receipts = ArrayList<Receipt>()
+        val db = this.readableDatabase
+//        val cursor = db.rawQuery("SELECT * FROM " + RECEIPT +
+//                " WHERE (" + "strftime('%d-%m-%Y',"+purchase_date+")" +
+//                " BETWEEN strftime('%d-%m-%Y','$date1')" + " AND strftime('%d-%m-%Y', '$date2'))", null)
+
+        val query = "SELECT * FROM " + RECEIPT +
+                " WHERE " + "strftime('%Y-%m-%d',"+purchase_date+")" +
+                " BETWEEN strftime('%Y-%m-%d','$date1')" + " AND strftime('%Y-%m-%d', '$date2')"
+        Log.d("DB", "Query : "+query)
+        val cursor = db.rawQuery(query, null)
+
+        if (cursor.count == 0){
+            Log.d("DB", "No receipts found between dates "+date1+" and "+date2)
+            val wtf = getReceipt(1)
+            Log.d("DB", "Receipt 1 date "+wtf.getPurchaseDate())
+            val wtf2 = getReceipt(2)
+            Log.d("DB", "Receipt 2 date "+wtf2.getPurchaseDate())
+        }
+        while (cursor.moveToNext()){
+            val receipt = Receipt(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getInt(4))
             // get all details for the receipt
             val cursor2 = db.rawQuery("SELECT * FROM " + PRODUCTSDETAILS + " WHERE " + receipt_id + " = " + receipt.id, null)
             while (cursor2.moveToNext()){
@@ -184,24 +218,55 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         db.close()
     }
 
-    fun getReceipt(id : Int) : Receipt{
-        val db = this.readableDatabase
-        val cursor = db.rawQuery("SELECT * FROM " + RECEIPT + " WHERE " + id_receipt + " = " + id, null)
-        cursor.moveToFirst()
-        val receipt = Receipt(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getInt(4))
-        // get all details for the receipt
-        val cursor2 = db.rawQuery("SELECT * FROM " + PRODUCTSDETAILS + " WHERE " + receipt_id + " = " + id, null)
-        while (cursor2.moveToNext()){
-            val product = Product(cursor2.getString(2), cursor2.getInt(4), cursor2.getInt(3))
-            receipt.products.add(product)
-        }
+    fun addProductsDetails(r_id : Int, name : String, price : Int, qty : Int){
 
-        Log.d("getReceipt", "Receipt"+receipt.getStoreName()+" has total of"+receipt.products.size+" products")
-        cursor.close()
+        // below we are creating
+        // a content values variable
+        val productval = ContentValues()
+
+        // we are inserting our values
+        productval.put(receipt_id, r_id)
+        productval.put(product_name, name)
+        productval.put(product_sum_price, price)
+        productval.put(product_quantity, qty)
+
+        val db = this.writableDatabase
+
+        // all values are inserted into database
+        db.insert(PRODUCTSDETAILS, null, productval)
+
         db.close()
-        return receipt
     }
 
+    fun getProductsDetails(id : Int) : ArrayList<Product>{
+        val products = ArrayList<Product>()
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM " + PRODUCTSDETAILS + " WHERE " + receipt_id + " = " + id, null)
+        while (cursor.moveToNext()){
+            val product = Product(cursor.getString(2), cursor.getInt(4), cursor.getInt(3))
+            products.add(product)
+        }
+        cursor.close()
+        db.close()
+        return products
+    }
+
+    fun updateProductsDetails(id: Int,product: Product){
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(product_name, product.name)
+        values.put(product_sum_price, product.price)
+        values.put(product_quantity, product.quantity)
+        // updating row
+        val msg = db.update(PRODUCTSDETAILS, values, id_detproduct + " = ?",
+            arrayOf(id.toString()))
+        db.close()
+        if (msg == 0){
+            Log.d("DB", "updateProductsDetails failed")
+        }else{
+            Log.d("DB", "updateProductsDetails success")
+        }
+    }
 
     companion object{
         // here we have defined variables for our database

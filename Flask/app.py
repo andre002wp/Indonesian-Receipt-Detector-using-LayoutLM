@@ -107,11 +107,10 @@ def detect():
         img_byte_arr = io.BytesIO()
         inf_img.save(img_byte_arr, format='PNG')
         img_byte_arr = img_byte_arr.getvalue()
-        for key in img_info:
-            if key != 'Image':
-                print(key,":",img_info[key])
+        img_str = base64.b64encode(img_byte_arr).decode('utf-8')
+        print(img_str)
 
-        return successResponse(singleReceipt(img_info),img_byte_arr,"success")
+        return successResponse(singleReceipt(img_info),img_str,"success")
     except Exception as e:
         return badRequest(e,"error")
 
@@ -409,7 +408,10 @@ def BeautifyInfo(imginfo):
     newinfo["Date"] = newinfo["Date"][1:]
     newinfo["Time"] = "".join(imginfo["Time"])
     newinfo["Time"] = newinfo["Time"][1:]
-    newinfo["Total"] = "".join(list(imginfo["Total"].values())[0]['total'])
+    try:
+        newinfo["Total"] = "".join(list(imginfo["Total"].values())[0]['total'])
+    except:
+        newinfo["Total"] = "".join(imginfo["Total"])
     newinfo["Total"] = newinfo["Total"][1:]
     newinfo["Products"] = {}
     for idx,item in enumerate(imginfo["Products"].values()):
@@ -425,10 +427,10 @@ def BeautifyInfo(imginfo):
         r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-2020-12:00
         r"^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})-([0-9]{1,2}:[0-9]{1,2})", # 2020-01-01-12:00
         r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-20-12:00
+        r"([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}-:[0-9]{1,2})" # 01-01-20-12-:00 # this is for indomaret
     ]
     datetime_str = newinfo['Date']+"-"+newinfo['Time']
-    datetime_str = datetime_str.replace("/","-").replace(".","-")
-    datetime_str
+    datetime_str = datetime_str.replace("/","-").replace(".","-").replace(" ","").replace(",","-").replace(".","-")
 
     ## beautify date and time
     for idx,regex in enumerate(datetime_regex):
@@ -440,29 +442,48 @@ def BeautifyInfo(imginfo):
             match_idx = -1
 
     if match_idx == 0:
-        newinfo['Date'] = match.group(1)+"-"+match.group(2)+"-"+match.group(3)
-        newinfo['Time'] = match.group(4)
-    elif match_idx == 1:    
         newinfo['Date'] = match.group(3)+"-"+match.group(2)+"-"+match.group(1)
         newinfo['Time'] = match.group(4)
-    elif match_idx == 2:
-        newinfo['Date'] = match.group(1)+"-"+match.group(2)+"-20"+match.group(3)
+    elif match_idx == 1:    
+        newinfo['Date'] = match.group(1)+"-"+match.group(2)+"-"+match.group(3)
         newinfo['Time'] = match.group(4)
+    elif match_idx == 2:
+        newinfo['Date'] = match.group(3)+"-"+match.group(2)+"-20"+match.group(1)
+        newinfo['Time'] = match.group(4)
+    elif match_idx == 3:
+        newinfo['Date'] = match.group(3)+"-"+match.group(2)+"-20"+match.group(1)
+        newinfo['Time'] = match.group(4).replace("-","")
     else:
         print("No match found")
+        print(datetime_str)
 
     return newinfo
 
+#if it aint broken dont fix it  ###LMAO 
 def singleReceipt(data):
     #products integer formatting
     products = data['Products'].copy()
     for item in list(products.values()):
         if len(item['price']) > 0:
-            item['price'] = int(item['price'].replace(',','').replace('.',''))
+            price = []
+            corrected_price = ""
+            for it in item['price'].split('.'):
+                for it2 in it.split(','):
+                    price.append(it2)
+            for idx,it in enumerate(price):
+                if idx != 0:
+                    if len(it) == 3:
+                        corrected_price += it
+                else:
+                    corrected_price += it
+                        
+
+            item['price'] = int(corrected_price)
         else:
             item['price'] = 0
+
         if len(item['quantity']) > 0:
-            item['quantity'] = int(item['quantity'].split('.')[0])
+            item['quantity'] = int(item['quantity'].replace(",",".").split('.')[0])
         else:
             item['quantity'] = 0
 
@@ -472,15 +493,15 @@ def singleReceipt(data):
         total = "".join(strtotal.split('-')[0])+ strtotal.split('-')[1][:3]
         total = int(total)
     except:
+        print(data)
         try:
             if type(data['Total']) == str:
-                total = int(total)
+                total = int(data['Total'])
             else:
-                total = data['Total']
+                total = 0
         except:
-            total = data['Total']
-                
-            
+            total = 0
+
 
     data = {
         'store_name': data["Store"],
@@ -489,21 +510,23 @@ def singleReceipt(data):
         'total': total,
         'products': list(products.values())
     }
+
+    print(data)
     return data
 
 def successResponse(values,image,message='success'):
     # can only concatenate str (not "bytes") to str
     res = {
         'data' : values,
-        'image' : base64.b64encode(image).decode('utf-8'),
-        'message' : message
+        'image' : str(image),
+        'message' : message,
     }
     return make_response(jsonify(res), 200)
 
 def badRequest(values,message='error'):
     res = {
         'data' : values,
-        'message' : message
+        'message' : message,
     }
     return make_response(jsonify(res), 400)
 
