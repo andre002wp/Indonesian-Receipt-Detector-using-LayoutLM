@@ -153,7 +153,7 @@ class scan_activity : AppCompatActivity() {
                             Log.d("API", i.price.toString())
                             Log.d("API", i.quantity.toString())
                         }
-                        Log.d("API", response.body()?.image.toString())
+//                        Log.d("API", response.body()?.image.toString())
 //                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
 //                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
                         Intent(this@scan_activity, Scan_Preview::class.java).also {

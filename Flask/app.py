@@ -382,8 +382,7 @@ def checkPredictedLabels(info,predicted_labels,box,words):
     elif predicted_labels == 'Total_value':
         if tolerated_total not in info["Total"].keys():
             info["Total"][tolerated_total] = {"total":[]}
-        
-        info["Total"][tolerated_box]['total'].append(words)
+        info["Total"][tolerated_total]['total'].append(words)
     elif predicted_labels == 'Prod_item_value':
         if tolerated_box not in info["Products"].keys():
             info["Products"][tolerated_box] = {"name":[],"quantity":[],"price":[]}
@@ -463,7 +462,11 @@ def BeautifyInfo(imginfo):
 def singleReceipt(data):
     #products integer formatting
     products = data['Products'].copy()
+    pop_products = []
     for item in list(products.values()):
+        if len(item['name']) < 1 and len(item['price']) < 1 or len(item['name']) < 1 and len(item['quantity']) < 1:
+            pop_products.append(item)
+
         if len(item['price']) > 0:
             price = []
             corrected_price = ""
@@ -486,6 +489,9 @@ def singleReceipt(data):
             item['quantity'] = int(item['quantity'].replace(",",".").split('.')[0])
         else:
             item['quantity'] = 0
+
+    for item in pop_products:
+        products.remove(item)
 
     try:
         #total integer formatting
@@ -518,7 +524,7 @@ def successResponse(values,image,message='success'):
     # can only concatenate str (not "bytes") to str
     res = {
         'data' : values,
-        'image' : str(image),
+        # 'image' : str(image),
         'message' : message,
     }
     return make_response(jsonify(res), 200)
