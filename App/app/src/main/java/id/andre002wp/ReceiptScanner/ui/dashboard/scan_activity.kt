@@ -35,9 +35,6 @@ class scan_activity : AppCompatActivity() {
         lateinit var result_bitmap: Bitmap
         fun isPersonInitialized(): Boolean = ::result_bitmap.isInitialized
         const val CAMERA_X_RESULT = 200
-
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-        private const val REQUEST_CODE_PERMISSIONS = 10
     }
 
     private lateinit var croppedImageView: ImageView

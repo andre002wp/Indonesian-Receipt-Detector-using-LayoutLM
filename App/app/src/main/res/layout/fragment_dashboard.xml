@@ -6,13 +6,23 @@
     android:layout_height="match_parent"
     tools:context=".ui.dashboard.DashboardFragment">
 
-    <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="400dp"
+    <androidx.cardview.widget.CardView
+        android:layout_width="350dp"
         android:layout_height="500dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:cardCornerRadius="30dp"
+        android:layout_marginTop="20dp">
+
+        <ImageView
+            android:id="@+id/scanImage"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+    </androidx.cardview.widget.CardView>
 
     <LinearLayout
         android:id="@+id/linearLayout"
@@ -27,18 +37,12 @@
         app:layout_constraintVertical_bias="0.29">
 
         <Button
-            android:id="@+id/btn_media"
+            android:id="@+id/scanBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Open Media" />
-
-        <Button
-            android:id="@+id/btn_picture"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Take Picture" />
+            android:text="Start Scan"
+            android:layout_marginHorizontal="20dp"/>
 
     </LinearLayout>
 

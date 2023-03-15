@@ -144,4 +144,6 @@
     <string name="addMore">Tambah</string>
     <string name="cancel">Cancel</string>
     <string name="save">save</string>
+    <string name="title_history">History</string>
+    <string name="title_scan">Scan</string>
 </resources>
