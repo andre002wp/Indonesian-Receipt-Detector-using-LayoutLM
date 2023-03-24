@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.Filter
 import android.widget.Filterable
 import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.release.gfg1.Product
@@ -14,10 +15,12 @@ import com.release.gfg1.Receipt
 import id.andre002wp.ReceiptScanner.R
 import id.andre002wp.ReceiptScanner.Utils.ProductAdapter
 import id.andre002wp.ReceiptScanner.ui.dashboard.Scan_Preview
+import id.andre002wp.ReceiptScanner.ui.history.HistoryFragment
 
-class ReceiptAdapter(private val dataSet: ArrayList<Receipt>) : RecyclerView.Adapter<ReceiptAdapter.ViewHolder>(),
+class ReceiptAdapter(private val dataSet: ArrayList<Receipt>, private var onEditReceipt: EditReceiptListener) : RecyclerView.Adapter<ReceiptAdapter.ViewHolder>(),
     Filterable {
     private var receiptListFull: ArrayList<Receipt> = ArrayList(dataSet)
+
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         // item_products_preview
@@ -49,7 +52,6 @@ class ReceiptAdapter(private val dataSet: ArrayList<Receipt>) : RecyclerView.Ada
 
     // Replace the contents of a view (invoked by the layout manager)
     override fun onBindViewHolder(viewHolder: ReceiptAdapter.ViewHolder, position: Int) {
-
         // Get element from your dataset at this position and replace the
         // contents of the view with that element
         viewHolder.store_name.text = dataSet[position].getStoreName()
@@ -58,25 +60,12 @@ class ReceiptAdapter(private val dataSet: ArrayList<Receipt>) : RecyclerView.Ada
         viewHolder.total.text = dataSet[position].getTotalPayment().toString()
         viewHolder.id.text = dataSet[position].getID().toString()
         viewHolder.itemHolder.setOnClickListener(View.OnClickListener {
-            var goToHistoryDetail = Intent(viewHolder.itemView.context, Scan_Preview::class.java)
-            goToHistoryDetail.putExtra("editflag",true)
-            goToHistoryDetail.putExtra("id", dataSet[position].getID())
-
-            goToHistoryDetail.putExtra("store_name", dataSet[position].getStoreName())
-            goToHistoryDetail.putExtra("date", dataSet[position].getPurchaseDate())
-            goToHistoryDetail.putExtra("time", dataSet[position].getPurchaseTime())
-            goToHistoryDetail.putExtra("total", dataSet[position].getTotalPayment())
-            goToHistoryDetail.putExtra("products", dataSet[position].products)
-            viewHolder.itemView.context.startActivity(goToHistoryDetail)
+            onEditReceipt.onEditReceipt(dataSet[position])
         })
     }
 
     // Return the size of your dataset (invoked by the layout manager)
     override fun getItemCount() = dataSet.size
-
-    public interface editReceiptListener {
-        fun onItemClick(item: Receipt)
-    }
 
     override fun getFilter(): Filter {
         return receiptFilter
@@ -105,6 +94,10 @@ class ReceiptAdapter(private val dataSet: ArrayList<Receipt>) : RecyclerView.Ada
             dataSet.addAll(results?.values as ArrayList<Receipt>)
             notifyDataSetChanged()
         }
+    }
+
+    public interface EditReceiptListener {
+        fun onEditReceipt(item: Receipt)
     }
 }
 

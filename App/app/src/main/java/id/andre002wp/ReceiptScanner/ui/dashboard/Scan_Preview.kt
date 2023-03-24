@@ -1,10 +1,7 @@
 package id.andre002wp.ReceiptScanner.ui.dashboard
 
-import android.content.Intent
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Parcelable
-import android.util.Base64
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -14,7 +11,6 @@ import com.release.gfg1.Product
 import com.release.gfg1.Receipt
 import id.andre002wp.ReceiptScanner.Utils.ProductAdapter
 import id.andre002wp.ReceiptScanner.databinding.ActivityScanPreviewBinding
-import java.io.ByteArrayOutputStream
 
 class Scan_Preview : AppCompatActivity() {
 
@@ -35,15 +31,23 @@ class Scan_Preview : AppCompatActivity() {
         var total_holder = binding.Total
         var products_holder = binding.rvProductsPreview
         var imageholder = binding.imageViewReceipt
-
-        var savebtn = binding.saveBtn
-        var cancelbtn = binding.cancelBtn
+        val cardSave = binding.cardSave
+        val cardRemove = binding.cardRemove
+        val tvRemove = binding.tvRemove
+        val tvSave = binding.tvSave
+        val textView2 = binding.textView2
         var addbtn = binding.addBtn
 
         var store = intent.getStringExtra("store_name")
         var date = intent.getStringExtra("date")
         var time = intent.getStringExtra("time")
         var total = intent.getIntExtra("total",-1)
+
+        //temp
+        val wtf = intent.getStringExtra("image")
+        Log.d("prev","image : $wtf")
+        textView2.text = wtf
+        //temp
 
         // get product and product as filter
         productAll = intent.getParcelableArrayListExtra<Parcelable>("products") as ArrayList<Product>
@@ -58,11 +62,19 @@ class Scan_Preview : AppCompatActivity() {
             Log.d("DB","Edit Receipt : $id with product size ${products?.size}")
         }
 
+        if (editflag == true){
+            tvSave.text = "Edit"
+            tvRemove.text = "Delete"
+        }else{
+            tvSave.text = "Save"
+            tvRemove.text = "Cancel"
+        }
+
         // get image from scan activity
-        if (scan_activity.isPersonInitialized()){
+        if (scan_activity.isResultBitmapInitialized()){
             if (this.editflag == false){
-                val image = scan_activity.result_bitmap
-                imageholder.setImageBitmap(image)
+//                val image = scan_activity.result_bitmap
+//                imageholder.setImageBitmap(image)
             }
         }
 
@@ -82,20 +94,24 @@ class Scan_Preview : AppCompatActivity() {
             products_holder.adapter?.notifyDataSetChanged()
         }
 
-        cancelbtn.setOnClickListener {
+
+//
+        cardRemove.setOnClickListener {
             if(editflag == true){
                 val db = DBHelper(this, null)
                 db.deleteReceipt(id)
+                setResult(RESULT_OK)
                 finish()
             }
             else{
                 Snackbar.make(binding.root, "Cancel", Snackbar.LENGTH_LONG)
                     .setAction("canceling", null).show()
+                setResult(RESULT_OK)
                 finish()
             }
         }
 
-        savebtn.setOnClickListener {
+        cardSave.setOnClickListener(){
             //add new receipt to database
             val final_store = store_holder.text.toString()
             val final_date = date_holder.text.toString()
@@ -112,12 +128,16 @@ class Scan_Preview : AppCompatActivity() {
                     val new_receipt = Receipt(id,final_store,final_date,final_time,final_total,products)
                     val db = DBHelper(this, null)
                     db.updateReceipt(new_receipt)
+                    setResult(RESULT_OK)
                 }
                 else {
                     val new_receipt = Receipt(0, final_store, final_date, final_time, final_total, products)
                     val db = DBHelper(this, null)
                     db.addReceipt(new_receipt)
+                    setResult(RESULT_OK)
                 }
+                Snackbar.make(binding.root, "Saving", Snackbar.LENGTH_LONG)
+                    .setAction("Dismiss", null).show()
                 finish()
             }
             else{
@@ -125,5 +145,6 @@ class Scan_Preview : AppCompatActivity() {
                     .setAction("canceling", null).show()
             }
         }
+
     }
 }

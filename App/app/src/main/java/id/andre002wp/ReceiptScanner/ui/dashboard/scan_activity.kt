@@ -1,6 +1,5 @@
 package id.andre002wp.ReceiptScanner.ui.dashboard
 
-import android.Manifest
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -23,17 +22,15 @@ import com.websitebeaver.documentscanner.constants.ResponseType
 import id.andre002wp.ReceiptScanner.Backend.ApiConfig.Companion.getApiService
 import id.andre002wp.ReceiptScanner.Backend.FileUploadResponse
 import id.andre002wp.ReceiptScanner.R
-import id.andre002wp.ReceiptScanner.Utils.uriToFile
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 import java.io.ByteArrayOutputStream
-import java.io.File
 
 class scan_activity : AppCompatActivity() {
     companion object {
         lateinit var result_bitmap: Bitmap
-        fun isPersonInitialized(): Boolean = ::result_bitmap.isInitialized
+        fun isResultBitmapInitialized(): Boolean = ::result_bitmap.isInitialized
         const val CAMERA_X_RESULT = 200
     }
 
@@ -63,7 +60,7 @@ class scan_activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scan)
-        isPersonInitialized()
+        isResultBitmapInitialized()
 
         // cropped image
         croppedImageView = findViewById(R.id.cropped_image_view)
@@ -146,11 +143,10 @@ class scan_activity : AppCompatActivity() {
                         for (i in scan_data!!?.products){
                             val new_product = Product(i.name, i.price, i.quantity)
                             products.add(new_product)
-                            Log.d("API", i.name)
-                            Log.d("API", i.price.toString())
-                            Log.d("API", i.quantity.toString())
+//                            Log.d("API", i.name)
+//                            Log.d("API", i.price.toString())
+//                            Log.d("API", i.quantity.toString())
                         }
-//                        Log.d("API", response.body()?.image.toString())
 //                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
 //                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
                         Intent(this@scan_activity, Scan_Preview::class.java).also {
@@ -173,7 +169,7 @@ class scan_activity : AppCompatActivity() {
                 }
 
                 override fun onFailure(call: Call<FileUploadResponse>, t: Throwable) {
-                    Log.e("cek", "thidaa")
+                    Log.e("cek", "" + t.message)
                     Toast.makeText(
                         applicationContext,
                         "Cannot instance Retrofit",

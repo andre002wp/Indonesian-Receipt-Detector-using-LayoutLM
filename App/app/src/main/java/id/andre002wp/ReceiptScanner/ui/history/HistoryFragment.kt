@@ -1,13 +1,15 @@
 package id.andre002wp.ReceiptScanner.ui.history
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
-import android.os.Parcelable
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -16,17 +18,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.datepicker.CalendarConstraints
 import com.google.android.material.datepicker.MaterialDatePicker
 import com.release.gfg1.DBHelper
-import com.release.gfg1.Product
 import com.release.gfg1.Receipt
 import id.andre002wp.ReceiptScanner.R
-import id.andre002wp.ReceiptScanner.Utils.ProductAdapter
 import id.andre002wp.ReceiptScanner.Utils.ReceiptAdapter.ReceiptAdapter
 import id.andre002wp.ReceiptScanner.databinding.FragmentHistoryBinding
 import id.andre002wp.ReceiptScanner.ui.dashboard.Scan_Preview
 import java.text.SimpleDateFormat
 import java.util.*
 
-class HistoryFragment : Fragment() {
+class HistoryFragment : Fragment(), ReceiptAdapter.EditReceiptListener {
 
     private var _binding: FragmentHistoryBinding? = null
 
@@ -36,12 +36,16 @@ class HistoryFragment : Fragment() {
     lateinit var receipts : ArrayList<Receipt>
     lateinit var startDateHolder : TextView
     lateinit var endDateHolder : TextView
+    private lateinit var products_holder : RecyclerView
+    private lateinit var dbrev: DBHelper
+    private lateinit var editResultLauncher: ActivityResultLauncher<Intent>
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        dbrev = DBHelper(this.requireContext(), null)
         val historyViewModel =
             ViewModelProvider(this).get(HistoryViewModel::class.java)
 
@@ -75,20 +79,23 @@ class HistoryFragment : Fragment() {
                 .setStart(janThisYear)
                 .setEnd(decThisYear)
 
-        var products_holder = binding.root.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rv_history)
-        val dbrev = DBHelper(this.requireContext(), null)
+        products_holder = binding.root.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.rv_history)
 
-        if (startDateHolder.text.toString().equals("")){
-            // get data from database
-            receipts = dbrev.getallReceipts()
-        }
-        else{
-            receipts = dbrev.getReceiptbyDate(startDateHolder.text.toString(), endDateHolder.text.toString())
-        }
+        checkDateSetting()
 
         Log.d("DB", "receipts size: ${receipts.size}")
+
+        editResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            Log.d("DB", "aleluya code ; "+result.resultCode)
+            if (result.resultCode == Activity.RESULT_OK) {
+                checkDateSetting()
+                updateAdapter(products_holder, receipts)
+                Log.d("DB", "aleluya "+receipts.get(0).getPurchaseTime())
+            }
+        }
+
         // create product adapter and set data to adapter
-        products_holder.adapter = ReceiptAdapter(receipts)
+        products_holder.adapter = ReceiptAdapter(receipts, this)
         // set adapter to recycler view
         products_holder.layoutManager = LinearLayoutManager(this.requireContext(), LinearLayoutManager.VERTICAL, false)
 
@@ -124,7 +131,6 @@ class HistoryFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        val dbrev = DBHelper(this.requireContext(), null)
         if (startDateHolder.text.toString().equals("")){
             // get data from database
             receipts = dbrev.getallReceipts()
@@ -142,6 +148,17 @@ class HistoryFragment : Fragment() {
         return receipts
     }
 
+    fun checkDateSetting(){
+        val dbrev = DBHelper(this.requireContext(), null)
+        if (startDateHolder.text.toString().equals("")){
+            // get data from database
+            receipts = dbrev.getallReceipts()
+        }
+        else{
+            receipts = dbrev.getReceiptbyDate(startDateHolder.text.toString(), endDateHolder.text.toString())
+        }
+    }
+
     fun updateTotal(textTotal: TextView, receipts: MutableList<Receipt>){
         var total = 0
         for(receipt in receipts){
@@ -151,12 +168,24 @@ class HistoryFragment : Fragment() {
     }
 
     fun updateAdapter(products_holder: androidx.recyclerview.widget.RecyclerView, receipts: MutableList<Receipt>){
-        products_holder.adapter = ReceiptAdapter(receipts as ArrayList<Receipt>)
+        products_holder.adapter = ReceiptAdapter(receipts as ArrayList<Receipt>, this)
         products_holder.layoutManager = LinearLayoutManager(this.requireContext(), LinearLayoutManager.VERTICAL, false)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onEditReceipt(item: Receipt) {
+        var goToHistoryDetail = Intent(context, Scan_Preview::class.java)
+        goToHistoryDetail.putExtra("editflag",true)
+        goToHistoryDetail.putExtra("id", item.getID())
+        goToHistoryDetail.putExtra("store_name", item.getStoreName())
+        goToHistoryDetail.putExtra("date", item.getPurchaseDate())
+        goToHistoryDetail.putExtra("time", item.getPurchaseTime())
+        goToHistoryDetail.putExtra("total", item.getTotalPayment())
+        goToHistoryDetail.putExtra("products", item.products)
+        editResultLauncher.launch(goToHistoryDetail)
     }
 }

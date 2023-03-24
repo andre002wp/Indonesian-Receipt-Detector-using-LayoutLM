@@ -103,16 +103,72 @@ def detect():
         cv2.imwrite(path, cv_img)
 
         inf_img,img_info = process_image(model, processor,filepath = path)
+        img_info = reformatInfo(img_info)
 
+        inf_img = inf_img.resize((int(inf_img.width/2),int(inf_img.height/2)))
         img_byte_arr = io.BytesIO()
         inf_img.save(img_byte_arr, format='PNG')
         img_byte_arr = img_byte_arr.getvalue()
         img_str = base64.b64encode(img_byte_arr).decode('utf-8')
-        print(img_str)
+        
+        with open(os.path.join(os.path.dirname(DIR),'Result','imgtest','test.txt'), 'w') as f:
+            f.write(img_str)
 
         return successResponse(singleReceipt(img_info),img_str,"success")
     except Exception as e:
         return badRequest(e,"error")
+    
+def reformatInfo(info):
+    #products integer formatting
+    products = {}
+
+    leading2zero = r"(.+)(,[0-9]{2})$"
+
+    for item in info['Products'].values():
+        if len(item['name']) < 1 and len(item['price']) < 1 or len(item['name']) < 1 and len(item['quantity']) < 1:
+            continue
+
+        if len(item['price']) > 0:
+            try:
+                # remove leading 0
+                match = re.match(leading2zero,item['price'])
+                if match:
+                    pricestr = match.group(1)
+                else:
+                    pricestr = item['price']
+
+                pricestr = pricestr.replace(".","-").replace(",","-").replace(" ","/")
+                price = []
+                for it in pricestr.split('-'):
+                    if len(it) > 0:
+                        price.append(it)
+
+                corrected_price = ""
+                for idx,it in enumerate(price):
+                    if idx != 0:
+                        if len(it) == 3:
+                            corrected_price += it
+                    else:
+                        corrected_price += it
+                            
+                if pricestr[0] == '-':
+                    corrected_price = '-' + corrected_price
+                    
+                item['price'] = int(corrected_price)
+            except:
+                item['price'] = 0
+        else:
+            item['price'] = 0
+
+        if len(item['quantity']) > 0:
+            item['quantity'] = int(item['quantity'].replace(",",".").split('.')[0])
+        else:
+            item['quantity'] = 0
+
+        products[len(products)] = item
+
+    info['Products'] = products
+    return info
 
 def decodeB64(data):
     image_64_decode = base64.b64decode(data) # base64.decode(image_64_encode)
@@ -236,89 +292,138 @@ def process_image(model, processor,filepath = None, image = None):
 
     # Beautify the info
     beautyinfo = BeautifyInfo(imginfo)
+    mostGreenFlag = checkGreenFlag(beautyinfo)
 
-    green_flag = checkGreenFlag(beautyinfo)
-    # if at least 1 product have parallel info of name, price and quantity then we can say that the info is correct if not
-    # then we try the 2nd method
-    if green_flag < 1:
+    # if there's a potential for incorrect layout
+    # meaning less than half of the products detected is false
+    # check for the other potential layout
+    # print("Original Layout")
+    # print(beautyinfo)
+    print(f"Most Green Flag: {mostGreenFlag}")
+    print(f"Products Length: {len(beautyinfo['Products'])//2}")
+
+    if (len(beautyinfo["Products"])//2) > mostGreenFlag:
+        print("Trying other Layout")
+        
+        
+        # 2nd method for getting products
+        print("2nd method")
+        tmpinfo = beautyinfo['Products'].copy()
         pop_idx = []
-        for idx,prod_item in enumerate(beautyinfo["Products"].values()):
+        for idx,prod_item in enumerate(tmpinfo.values()):
             # if its not the first item
             if idx > 0:
                 # if it have no name but has price and quantity
                 # print(f"if {len(prod_item['name'])} < 1 and {len(prod_item['quantity'])} > 1 and {len(prod_item['price'])} > 1:")
                 if len(prod_item["name"]) < 1 and len(prod_item['quantity']) > 0 and len(prod_item['price']) > 0:
                     # then the name is the previous item
-                    beautyinfo["Products"][idx]["name"] = beautyinfo["Products"][idx-1]["name"]
+                    tmpinfo[idx]["name"] = tmpinfo[idx-1]["name"]
                     pop_idx.append(idx-1)
         # remove the previous item
         for idx in pop_idx:
-            beautyinfo["Products"].pop(idx)
+            tmpinfo.pop(idx)
 
-    # check again
-    green_flag = checkGreenFlag(beautyinfo)
+        # check again
+        if mostGreenFlag < checkGreenFlag(tmpinfo):
+            print("2nd method is better")
+            print(tmpinfo)
+            mostTrueProducts = tmpinfo.copy()
+            mostGreenFlag = checkGreenFlag(tmpinfo)
 
-    # if still no green flag then we try the 3rd method
-    if green_flag < 1:
+        # 3rd method for getting products
+        print("3rd method")
+        tmpinfo = beautyinfo['Products'].copy()
         pop_idx = []
-        for idx,prod_item in enumerate(beautyinfo["Products"].values()):
+        for idx,prod_item in enumerate(tmpinfo.values()):
             # if its not the first item
             if idx > 0:
                 # if it has name but dont have price and quantity
                 # print(f"if {len(prod_item['name'])} < 1 and {len(prod_item['quantity'])} > 1 and {len(prod_item['price'])} > 1:")
                 if len(prod_item["name"]) > 0 and len(prod_item['quantity']) < 1 and len(prod_item['price']) < 1:
-                    if len(beautyinfo["Products"][idx-1]["name"]) < 1 and len(beautyinfo["Products"][idx-1]['quantity']) > 0 and len(beautyinfo["Products"][idx-1]['price']) > 0:
-                        # then the name is the previous item
-                        beautyinfo["Products"][idx]["name"] = beautyinfo["Products"][idx-1]["name"]
+                    if len(tmpinfo[idx-1]["name"]) < 1 and len(tmpinfo[idx-1]['quantity']) > 0 and len(tmpinfo[idx-1]['price']) > 0:
+                        # then the price and quantity is the previous item
+                        tmpinfo[idx]["quantity"] = tmpinfo[idx-1]["quantity"]
+                        tmpinfo[idx]["price"] = tmpinfo[idx-1]["price"]
                         pop_idx.append(idx-1)
         # remove the previous item
         for idx in pop_idx:
-            beautyinfo["Products"].pop(idx)
+            tmpinfo.pop(idx)
 
-    # check again
-    green_flag = checkGreenFlag(beautyinfo)
+        # check again
+        if mostGreenFlag < checkGreenFlag(tmpinfo):
+            print("3rd method is better")
+            print(tmpinfo)
+            mostTrueProducts = tmpinfo.copy()
+            mostGreenFlag = checkGreenFlag(tmpinfo)
 
+        # 4th method for getting products
+        print("4th method")
+        tmpinfo = beautyinfo['Products'].copy()
+        pop_idx = []
+        for idx,prod_item in enumerate(tmpinfo.values()):
+            # if its not the first item
+            if idx > 0:
+                # if it has quantity and but dont have name and price
+                # print(f"if {len(prod_item['name'])} < 1 and {len(prod_item['quantity'])} > 1 and {len(prod_item['price'])} > 1:")
+                if len(prod_item["name"]) < 1 and len(prod_item['quantity']) > 0 and len(prod_item['price']) < 1:
+                    if len(tmpinfo[idx-1]["name"]) > 0 and len(tmpinfo[idx-1]['quantity']) < 1 and len(tmpinfo[idx-1]['price']) > 0:
+                        # then the name and price is the previous item
+                        tmpinfo[idx]["name"] = tmpinfo[idx-1]["name"]
+                        tmpinfo[idx]["price"] = tmpinfo[idx-1]["price"]
+                        pop_idx.append(idx-1)
+        # remove the previous item
+        for idx in pop_idx:
+            tmpinfo.pop(idx)
+
+        # check again
+        if mostGreenFlag < checkGreenFlag(tmpinfo):
+            print("4th method is better")
+            print(tmpinfo)
+            mostTrueProducts = tmpinfo.copy()
+            mostGreenFlag = checkGreenFlag(tmpinfo)
+
+        beautyinfo["Products"] = mostTrueProducts
+    
     # if still no green flag then we can't say that the info is correct
-    if green_flag < 1:
+    if  mostGreenFlag < 1:
         #raise error
         print(beautyinfo)
         raise Exception("The info is not correct")
     else:
         return inf_img,beautyinfo
 
-def checkGreenFlag(imginfo):
-    # additional check for the products
-    green_flag = 0
-    for prod_item in imginfo["Products"].values():
-        red_flag = 0
-        if len(prod_item["name"]) < 1:
-            red_flag+=1
-        if len(prod_item["price"]) < 1:
-            red_flag+=1
-        if len(prod_item["quantity"]) < 1:
-            red_flag+=1
-        # print("red :",red_flag)
-        # means at least 1 product has parallel info of name, price and quantity
-        if red_flag < 1:
-            green_flag+=1
-    return green_flag
-
 
 def checkGreenFlag(imginfo):
     # additional check for the products
     green_flag = 0
-    for prod_item in imginfo["Products"].values():
-        red_flag = 0
-        if len(prod_item["name"]) < 1:
-            red_flag+=1
-        if len(prod_item["price"]) < 1:
-            red_flag+=1
-        if len(prod_item["quantity"]) < 1:
-            red_flag+=1
-        # print("red :",red_flag)
-        # means at least 1 product has parallel info of name, price and quantity
-        if red_flag < 1:
-            green_flag+=1
+
+    if "Products" in imginfo.keys():
+        for prod_item in imginfo["Products"].values():
+            red_flag = 0
+            if len(prod_item["name"]) < 1:
+                red_flag+=1
+            if len(prod_item["price"]) < 1:
+                red_flag+=1
+            if len(prod_item["quantity"]) < 1:
+                red_flag+=1
+            # print("red :",red_flag)
+            # means at least 1 product has parallel info of name, price and quantity
+            if red_flag < 1:
+                green_flag+=1
+    else:
+        for prod_item in imginfo.values():
+            red_flag = 0
+            if len(prod_item["name"]) < 1:
+                red_flag+=1
+            if len(prod_item["price"]) < 1:
+                red_flag+=1
+            if len(prod_item["quantity"]) < 1:
+                red_flag+=1
+            # print("red :",red_flag)
+            # means at least 1 product has parallel info of name, price and quantity
+            if red_flag < 1:
+                green_flag+=1
+
     return green_flag
 
 def checkPredictedLabels(info,predicted_labels,box,words):
@@ -423,10 +528,11 @@ def BeautifyInfo(imginfo):
         newinfo["Products"][idx]["price"] = newinfo["Products"][idx]["price"][1:]
 
     datetime_regex = [
-        r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-2020-12:00
+        r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-2020-12:00 # ex Toosi
         r"^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})-([0-9]{1,2}:[0-9]{1,2})", # 2020-01-01-12:00
         r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-20-12:00
-        r"([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}-:[0-9]{1,2})" # 01-01-20-12-:00 # this is for indomaret
+        r"([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}-:[0-9]{1,2})", # 01-01-20-12-:00 # ex indomaret
+        r"([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}-[0-9]{1,2})" # 01-01-20-12-00 # ex KOVFEE
     ]
     datetime_str = newinfo['Date']+"-"+newinfo['Time']
     datetime_str = datetime_str.replace("/","-").replace(".","-").replace(" ","").replace(",","-").replace(".","-")
@@ -452,46 +558,27 @@ def BeautifyInfo(imginfo):
     elif match_idx == 3:
         newinfo['Date'] = match.group(3)+"-"+match.group(2)+"-20"+match.group(1)
         newinfo['Time'] = match.group(4).replace("-","")
+    elif match_idx == 4:
+        newinfo['Date'] = "20"+match.group(3)+"-"+match.group(2)+match.group(1)
+        newinfo['Time'] = match.group(4).replace("-",":")
     else:
         print("No match found")
         print(datetime_str)
+        try:
+            newinfo['Date'] = newinfo['Date'].replace("/","-").replace(".","-").replace(" ","").replace(",","-").replace(".","-")
+            while newinfo['Date'][-1] not in ["0","1","2","3","4","5","6","7","8","9"]:
+                newinfo['Date'] = newinfo['Date'][:-1]
+            newinfo['Time'] = newinfo['Time'].replace("/","-").replace(".","-").replace(" ","").replace(",","-").replace(".","-")
+            while newinfo['Time'][-1] not in ["0","1","2","3","4","5","6","7","8","9"]:
+                newinfo['Time'] = newinfo['Time'][:-1]
+        except:
+            pass
+
 
     return newinfo
 
 #if it aint broken dont fix it  ###LMAO 
 def singleReceipt(data):
-    #products integer formatting
-    products = data['Products'].copy()
-    pop_products = []
-    for item in list(products.values()):
-        if len(item['name']) < 1 and len(item['price']) < 1 or len(item['name']) < 1 and len(item['quantity']) < 1:
-            pop_products.append(item)
-
-        if len(item['price']) > 0:
-            price = []
-            corrected_price = ""
-            for it in item['price'].split('.'):
-                for it2 in it.split(','):
-                    price.append(it2)
-            for idx,it in enumerate(price):
-                if idx != 0:
-                    if len(it) == 3:
-                        corrected_price += it
-                else:
-                    corrected_price += it
-                        
-
-            item['price'] = int(corrected_price)
-        else:
-            item['price'] = 0
-
-        if len(item['quantity']) > 0:
-            item['quantity'] = int(item['quantity'].replace(",",".").split('.')[0])
-        else:
-            item['quantity'] = 0
-
-    for item in pop_products:
-        products.remove(item)
 
     try:
         #total integer formatting
@@ -508,13 +595,12 @@ def singleReceipt(data):
         except:
             total = 0
 
-
     data = {
         'store_name': data["Store"],
         'date': data["Date"],
         'time': data['Time'],
         'total': total,
-        'products': list(products.values())
+        'products': list(data['Products'].values())
     }
 
     print(data)
@@ -524,15 +610,15 @@ def successResponse(values,image,message='success'):
     # can only concatenate str (not "bytes") to str
     res = {
         'data' : values,
-        # 'image' : str(image),
-        'message' : message,
+        'image' : image,
+        'message' : message
     }
     return make_response(jsonify(res), 200)
 
 def badRequest(values,message='error'):
     res = {
         'data' : values,
-        'message' : message,
+        'message' : message
     }
     return make_response(jsonify(res), 400)
 

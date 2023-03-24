@@ -3,6 +3,7 @@ package id.andre002wp.ReceiptScanner
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
@@ -10,41 +11,25 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
-import android.util.Base64
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.ImageView
 import android.widget.LinearLayout
-import android.widget.Toast
 import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.result.registerForActivityResult
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toBitmap
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.release.gfg1.Product
+import com.release.gfg1.DBHelper
 import com.websitebeaver.documentscanner.DocumentScanner
 import com.websitebeaver.documentscanner.constants.ResponseType
-import id.andre002wp.ReceiptScanner.Backend.ApiConfig
-import id.andre002wp.ReceiptScanner.Backend.FileUploadResponse
 import id.andre002wp.ReceiptScanner.databinding.ActivityMainBinding
 import id.andre002wp.ReceiptScanner.ui.dashboard.DashboardFragment
-import id.andre002wp.ReceiptScanner.ui.dashboard.Scan_Preview
-import id.andre002wp.ReceiptScanner.ui.dashboard.scan_activity
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import java.io.ByteArrayOutputStream
+
 
 class MainActivity : AppCompatActivity() {
 

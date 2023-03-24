@@ -104,11 +104,11 @@ class DashboardFragment : Fragment() {
                         for (i in scan_data!!?.products){
                             val new_product = Product(i.name, i.price, i.quantity)
                             products.add(new_product)
-                            Log.d("API", i.name)
-                            Log.d("API", i.price.toString())
-                            Log.d("API", i.quantity.toString())
+//                            Log.d("API", i.name)
+//                            Log.d("API", i.price.toString())
+//                            Log.d("API", i.quantity.toString())
                         }
-//                        Log.d("API", response.body()?.image.toString())
+                        Log.d("API", response.body()?.image!!)
 //                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
 //                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
                         Intent(context, Scan_Preview::class.java).also {
@@ -118,6 +118,7 @@ class DashboardFragment : Fragment() {
                             it.putExtra("time", scan_data!!?.time)
                             it.putExtra("total", scan_data!!?.total)
                             it.putExtra("products", products)
+                            it.putExtra("image", response.body()?.image!!)
                             startActivity(it)
                         }
                     } else {

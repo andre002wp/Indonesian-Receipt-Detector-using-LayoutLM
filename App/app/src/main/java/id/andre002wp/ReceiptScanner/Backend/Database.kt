@@ -30,18 +30,26 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
                 product_quantity + " INTEGER," +
                 product_sum_price + " INTEGER" + ")")
 
+        val query3 = ("CREATE TABLE " + USER + " (" +
+                id_user + " INTEGER PRIMARY KEY, " +
+                username + " TEXT " + ")")
+
         // we are calling sqlite
         // method for executing our query
         db.execSQL(query)
         db.execSQL(query2)
+        db.execSQL(query3)
     }
+
 
     override fun onUpgrade(db: SQLiteDatabase, p1: Int, p2: Int) {
         // this method is to check if table already exists
         db.execSQL("DROP TABLE IF EXISTS " + RECEIPT)
         db.execSQL("DROP TABLE IF EXISTS " + PRODUCTSDETAILS)
+        db.execSQL("DROP TABLE IF EXISTS " + USER)
         onCreate(db)
     }
+
 
     // This method is for adding data in our database
     fun addReceipt(store : String,date : String, time: String, total : Int, products : ArrayList<Product>){
@@ -154,22 +162,15 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     fun getReceiptbyDate(date1 : String,date2 :String) : ArrayList<Receipt>{
         val receipts = ArrayList<Receipt>()
         val db = this.readableDatabase
-//        val cursor = db.rawQuery("SELECT * FROM " + RECEIPT +
-//                " WHERE (" + "strftime('%d-%m-%Y',"+purchase_date+")" +
-//                " BETWEEN strftime('%d-%m-%Y','$date1')" + " AND strftime('%d-%m-%Y', '$date2'))", null)
 
         val query = "SELECT * FROM " + RECEIPT +
                 " WHERE " + "strftime('%Y-%m-%d',"+purchase_date+")" +
                 " BETWEEN strftime('%Y-%m-%d','$date1')" + " AND strftime('%Y-%m-%d', '$date2')"
-        Log.d("DB", "Query : "+query)
         val cursor = db.rawQuery(query, null)
 
         if (cursor.count == 0){
             Log.d("DB", "No receipts found between dates "+date1+" and "+date2)
-            val wtf = getReceipt(1)
-            Log.d("DB", "Receipt 1 date "+wtf.getPurchaseDate())
-            val wtf2 = getReceipt(2)
-            Log.d("DB", "Receipt 2 date "+wtf2.getPurchaseDate())
+            return receipts
         }
         while (cursor.moveToNext()){
             val receipt = Receipt(cursor.getInt(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getInt(4))
@@ -194,27 +195,26 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         values.put(purchase_date, receipt.getPurchaseDate())
         values.put(purchase_time, receipt.getPurchaseTime())
         values.put(total_payment, receipt.getTotalPayment())
-        Log.d("DB", "updating receipt with id : "+receipt.id.toString())
-        Log.d("DB", "store_name : "+receipt.getStoreName())
-        Log.d("DB", "purchase_date : "+receipt.getPurchaseDate())
-        Log.d("DB", "purchase_time : "+receipt.getPurchaseTime())
-        Log.d("DB", "total_payment : "+receipt.getTotalPayment().toString())
+//        Log.d("DB", "updating receipt with id : "+receipt.id.toString())
+//        Log.d("DB", "store_name : "+receipt.getStoreName())
+//        Log.d("DB", "purchase_date : "+receipt.getPurchaseDate())
+//        Log.d("DB", "purchase_time : "+receipt.getPurchaseTime())
+//        Log.d("DB", "total_payment : "+receipt.getTotalPayment().toString())
         // updating row
         val msg = db.update(RECEIPT, values, id_receipt + " = ?",
             arrayOf(receipt.id.toString()))
         db.close()
-        Log.d("DB", "msg : "+msg.toString())
     }
 
     fun deleteReceipt(id: Int){
         val db = this.writableDatabase
         val msg = db.delete(RECEIPT, id_receipt + " = ?",
             arrayOf(id.toString()))
-        Log.d("DB", "deleting receipt with id $id msg :"+msg.toString())
+//        Log.d("DB", "deleting receipt with id $id msg :"+msg.toString())
         // delete all products details
         val msg2 = db.delete(PRODUCTSDETAILS, receipt_id + " = ?",
             arrayOf(id.toString()))
-        Log.d("DB", "deleting attached products msg :"+msg2.toString())
+//        Log.d("DB", "deleting attached products msg :"+msg2.toString())
         db.close()
     }
 
@@ -268,6 +268,50 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         }
     }
 
+    fun updateUser(id: Int, name: String){
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(username, name)
+        // updating row
+        val msg = db.update(USER, values, id_user + " = ?",
+            arrayOf(id.toString()))
+        db.close()
+        if (msg == 0){
+            Log.d("DB", "updateUser failed")
+        }else{
+            Log.d("DB", "updateUser success")
+        }
+    }
+
+    fun getUser(id: Int) : User? {
+        val db = this.readableDatabase
+        val cursor = db.rawQuery("SELECT * FROM " + USER + " WHERE " + id_user + " = " + id, null)
+        cursor.moveToFirst()
+        if (cursor.count > 0){
+            val user = User(cursor.getInt(0), cursor.getString(1))
+            cursor.close()
+            db.close()
+            return user
+        }
+        return null
+    }
+
+    fun addUser(name: String){
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(username, name)
+        db.insert(USER, null, values)
+        db.close()
+    }
+
+    fun addUser(user : User){
+        val db = this.writableDatabase
+        val values = ContentValues()
+        values.put(username, user.username)
+        db.insert(USER, null, values)
+        db.close()
+    }
+
     companion object{
         // here we have defined variables for our database
 
@@ -281,6 +325,7 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         // below is the variable for table name
         val RECEIPT = "receipt_table"
         val PRODUCTSDETAILS = "products_details_table"
+        val USER = "user_table"
 
         // below is the variable for RECEIPT table
         val id_receipt = "id_receipt"
@@ -295,6 +340,10 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         val product_name = "product_name"
         val product_sum_price = "product_price"
         val product_quantity = "qty"
+
+        // below is the variable for USER table
+        val id_user = "id_user"
+        val username = "username"
     }
 }
 
@@ -352,6 +401,19 @@ class Receipt(var id : Int, var store : String, var date : String, var time : St
         products.add(product)
     }
 
+}
+
+@Parcelize
+class User(var id_user: Int, var username: String) : Parcelable {
+
+    constructor(username: String) : this(0, username)
+    fun getName() : String{
+        return username
+    }
+
+    fun setName(username : String){
+        this.username = username
+    }
 }
 
 @Parcelize

@@ -22,14 +22,16 @@ class FileUploadResponse(
     @Expose
     val data: ReceiptScanResponse,
 
-//    @field:SerializedName("image")
-//    @Expose
-//    val image: String,
+    @field:SerializedName("image")
+    @Expose
+    val image: String,
 
     @field:SerializedName("error")
+    @Expose
     val error: Boolean,
 
     @field:SerializedName("message")
+    @Expose
     val message: String
 )
 
