@@ -29,8 +29,6 @@ import java.io.ByteArrayOutputStream
 
 class scan_activity : AppCompatActivity() {
     companion object {
-        lateinit var result_bitmap: Bitmap
-        fun isResultBitmapInitialized(): Boolean = ::result_bitmap.isInitialized
         const val CAMERA_X_RESULT = 200
     }
 
@@ -60,7 +58,7 @@ class scan_activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_scan)
-        isResultBitmapInitialized()
+//        isResultBitmapInitialized()
 
         // cropped image
         croppedImageView = findViewById(R.id.cropped_image_view)

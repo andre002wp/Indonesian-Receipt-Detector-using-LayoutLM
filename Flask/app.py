@@ -107,7 +107,7 @@ def detect():
 
         inf_img = inf_img.resize((int(inf_img.width/2),int(inf_img.height/2)))
         img_byte_arr = io.BytesIO()
-        inf_img.save(img_byte_arr, format='PNG')
+        inf_img.save(img_byte_arr, format='jpeg')
         img_byte_arr = img_byte_arr.getvalue()
         img_str = base64.b64encode(img_byte_arr).decode('utf-8')
         

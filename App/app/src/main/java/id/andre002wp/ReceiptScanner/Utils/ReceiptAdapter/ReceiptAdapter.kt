@@ -1,26 +1,31 @@
 package id.andre002wp.ReceiptScanner.Utils.ReceiptAdapter
 
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Filter
 import android.widget.Filterable
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.result.ActivityResultLauncher
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.release.gfg1.Product
 import com.release.gfg1.Receipt
+import id.andre002wp.ReceiptScanner.MainActivity
 import id.andre002wp.ReceiptScanner.R
 import id.andre002wp.ReceiptScanner.Utils.ProductAdapter
 import id.andre002wp.ReceiptScanner.ui.dashboard.Scan_Preview
 import id.andre002wp.ReceiptScanner.ui.history.HistoryFragment
+import java.io.File
 
 class ReceiptAdapter(private val dataSet: ArrayList<Receipt>, private var onEditReceipt: EditReceiptListener) : RecyclerView.Adapter<ReceiptAdapter.ViewHolder>(),
     Filterable {
     private var receiptListFull: ArrayList<Receipt> = ArrayList(dataSet)
-
+    private var storage = MainActivity.storage
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         // item_products_preview
@@ -29,6 +34,7 @@ class ReceiptAdapter(private val dataSet: ArrayList<Receipt>, private var onEdit
         val timeholder: TextView
         val total: TextView
         val id: TextView
+        val receiptImage : ImageView
         var itemHolder : ConstraintLayout
         init {
             // Define click listener for the ViewHolder's View.
@@ -38,6 +44,7 @@ class ReceiptAdapter(private val dataSet: ArrayList<Receipt>, private var onEdit
             timeholder = view.findViewById(R.id.purchase_time)
             id = view.findViewById(R.id.idplaceholder)
             itemHolder = view.findViewById(R.id.purchase_history_item)
+            receiptImage = view.findViewById(R.id.receipt_image)
         }
     }
 
@@ -58,6 +65,16 @@ class ReceiptAdapter(private val dataSet: ArrayList<Receipt>, private var onEdit
         viewHolder.dateholder.text = dataSet[position].getPurchaseDate()
         viewHolder.timeholder.text = dataSet[position].getPurchaseTime()
         viewHolder.total.text = dataSet[position].getTotalPayment().toString()
+        if(storage.isExternalStorageReadable()){
+            try {
+                val imagepath = storage.getImagePath(dataSet[position].getID())
+                val bitmap = File(imagepath).readBytes()
+                viewHolder.receiptImage.setImageBitmap(BitmapFactory.decodeByteArray(bitmap, 0, bitmap.size))
+            }
+            catch (e: Exception){
+                viewHolder.receiptImage.setImageResource(R.drawable.imagenotfound)
+            }
+        }
         viewHolder.id.text = dataSet[position].getID().toString()
         viewHolder.itemHolder.setOnClickListener(View.OnClickListener {
             onEditReceipt.onEditReceipt(dataSet[position])

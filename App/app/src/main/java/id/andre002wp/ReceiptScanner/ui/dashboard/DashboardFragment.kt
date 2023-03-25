@@ -1,6 +1,7 @@
 package id.andre002wp.ReceiptScanner.ui.dashboard
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
@@ -18,6 +19,7 @@ import com.release.gfg1.Product
 import id.andre002wp.ReceiptScanner.Backend.ApiConfig
 import id.andre002wp.ReceiptScanner.Backend.FileUploadResponse
 import id.andre002wp.ReceiptScanner.MainActivity
+import id.andre002wp.ReceiptScanner.MainActivity.Companion.result_bitmap
 import id.andre002wp.ReceiptScanner.R
 import id.andre002wp.ReceiptScanner.databinding.FragmentDashboardBinding
 import retrofit2.Call
@@ -108,9 +110,9 @@ class DashboardFragment : Fragment() {
 //                            Log.d("API", i.price.toString())
 //                            Log.d("API", i.quantity.toString())
                         }
-                        Log.d("API", response.body()?.image!!)
-//                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
-//                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
+//                        Log.d("API", response.body()?.image!!)
+                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
+                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
                         Intent(context, Scan_Preview::class.java).also {
                             it.putExtra("editflag", false)
                             it.putExtra("store_name", scan_data!!?.store_name)
@@ -131,7 +133,7 @@ class DashboardFragment : Fragment() {
                 }
 
                 override fun onFailure(call: Call<FileUploadResponse>, t: Throwable) {
-                    Log.e("cek", "thidaa")
+                    Log.e("cek", "error: " + t.message)
                     Toast.makeText(
                         context,
                         "Cannot instance Retrofit",

@@ -3,7 +3,6 @@ package id.andre002wp.ReceiptScanner
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.database.sqlite.SQLiteDatabase
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
@@ -24,9 +23,9 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
-import com.release.gfg1.DBHelper
 import com.websitebeaver.documentscanner.DocumentScanner
 import com.websitebeaver.documentscanner.constants.ResponseType
+import id.andre002wp.ReceiptScanner.Utils.Storage
 import id.andre002wp.ReceiptScanner.databinding.ActivityMainBinding
 import id.andre002wp.ReceiptScanner.ui.dashboard.DashboardFragment
 
@@ -42,6 +41,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         lateinit var result_bitmap: Bitmap
         fun isBitmapInitialized(): Boolean = ::result_bitmap.isInitialized
+        var storage: Storage = Storage(this)
         const val CAMERA_X_RESULT = 200
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE)
         private const val REQUEST_CODE_PERMISSIONS = 10
@@ -56,7 +56,7 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        isBitmapInitialized()
         val navView: BottomNavigationView = binding.navView
 
         navController = findNavController(R.id.nav_host_fragment_activity_main)

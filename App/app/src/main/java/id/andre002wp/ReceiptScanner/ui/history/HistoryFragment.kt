@@ -86,11 +86,9 @@ class HistoryFragment : Fragment(), ReceiptAdapter.EditReceiptListener {
         Log.d("DB", "receipts size: ${receipts.size}")
 
         editResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            Log.d("DB", "aleluya code ; "+result.resultCode)
             if (result.resultCode == Activity.RESULT_OK) {
                 checkDateSetting()
                 updateAdapter(products_holder, receipts)
-                Log.d("DB", "aleluya "+receipts.get(0).getPurchaseTime())
             }
         }
 

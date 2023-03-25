@@ -82,7 +82,7 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
     }
 
     // This method is for adding data in our database
-    fun addReceipt(receipt: Receipt){
+    fun addReceipt(receipt: Receipt): Int {
         val Receipt = ContentValues()
         var new_id = -1
 
@@ -118,6 +118,7 @@ class DBHelper(context: Context, factory: SQLiteDatabase.CursorFactory?) :
         // at last we are
         // closing our database
         db.close()
+        return new_id
     }
 
     fun getallReceipts() : ArrayList<Receipt>{

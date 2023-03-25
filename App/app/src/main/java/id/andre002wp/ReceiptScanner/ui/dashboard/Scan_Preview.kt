@@ -1,5 +1,7 @@
 package id.andre002wp.ReceiptScanner.ui.dashboard
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
@@ -9,21 +11,29 @@ import com.google.android.material.snackbar.Snackbar
 import com.release.gfg1.DBHelper
 import com.release.gfg1.Product
 import com.release.gfg1.Receipt
+import id.andre002wp.ReceiptScanner.MainActivity
+import id.andre002wp.ReceiptScanner.R
 import id.andre002wp.ReceiptScanner.Utils.ProductAdapter
+import id.andre002wp.ReceiptScanner.Utils.Storage
 import id.andre002wp.ReceiptScanner.databinding.ActivityScanPreviewBinding
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.OutputStream
 
 class Scan_Preview : AppCompatActivity() {
 
     private lateinit var binding: ActivityScanPreviewBinding
     private var editflag = false
     private var id = -1
+    private lateinit var storage : Storage
     private lateinit var productAll : ArrayList<Product>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         binding = ActivityScanPreviewBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        storage = MainActivity.storage
 
         var store_holder = binding.storeName
         var date_holder = binding.Date
@@ -35,19 +45,12 @@ class Scan_Preview : AppCompatActivity() {
         val cardRemove = binding.cardRemove
         val tvRemove = binding.tvRemove
         val tvSave = binding.tvSave
-        val textView2 = binding.textView2
         var addbtn = binding.addBtn
 
         var store = intent.getStringExtra("store_name")
         var date = intent.getStringExtra("date")
         var time = intent.getStringExtra("time")
         var total = intent.getIntExtra("total",-1)
-
-        //temp
-        val wtf = intent.getStringExtra("image")
-        Log.d("prev","image : $wtf")
-        textView2.text = wtf
-        //temp
 
         // get product and product as filter
         productAll = intent.getParcelableArrayListExtra<Parcelable>("products") as ArrayList<Product>
@@ -71,10 +74,24 @@ class Scan_Preview : AppCompatActivity() {
         }
 
         // get image from scan activity
-        if (scan_activity.isResultBitmapInitialized()){
-            if (this.editflag == false){
-//                val image = scan_activity.result_bitmap
-//                imageholder.setImageBitmap(image)
+        if (editflag == false){
+            if (MainActivity.isBitmapInitialized()){
+                val image = MainActivity.result_bitmap
+                imageholder.setImageBitmap(image)
+            }
+        }
+        else{
+            try {
+                val imagepath = storage.getImagePath(id)
+                Log.d("storage","getting image : $imagepath")
+                val image = File(imagepath).readBytes()
+                imageholder.setImageBitmap(Bitmap.createScaledBitmap(BitmapFactory.decodeByteArray(image, 0, image.size), 1000, 1000, false))
+            }
+            catch (e: IOException){
+                Log.d("storage","image not found")
+                // set image not found
+                imageholder.setImageBitmap(BitmapFactory.decodeResource(resources, R.drawable.imagenotfound)
+                )
             }
         }
 
@@ -125,6 +142,11 @@ class Scan_Preview : AppCompatActivity() {
 
             if (!final_store.equals("") && !final_date.equals("") && !final_time.equals("") && final_total > 0 && products.size > 0) {
                 if (editflag == true){
+                    if(storage.isExternalStorageReadable() && storage.isExternalStorageWritable()){
+                        val filename = "img/$id.png"
+                        val file = getFileStreamPath(filename)
+                        file.delete()
+                    }
                     val new_receipt = Receipt(id,final_store,final_date,final_time,final_total,products)
                     val db = DBHelper(this, null)
                     db.updateReceipt(new_receipt)
@@ -133,8 +155,14 @@ class Scan_Preview : AppCompatActivity() {
                 else {
                     val new_receipt = Receipt(0, final_store, final_date, final_time, final_total, products)
                     val db = DBHelper(this, null)
-                    db.addReceipt(new_receipt)
+                    val new_id = db.addReceipt(new_receipt)
                     setResult(RESULT_OK)
+                    // then save image to internal storage
+                    if (MainActivity.isBitmapInitialized()) {
+                        val saveimg = MainActivity.result_bitmap
+                        val filepath = storage.saveImage(new_id, saveimg)
+                        Log.d("storage", "saving image to : $filepath")
+                    }
                 }
                 Snackbar.make(binding.root, "Saving", Snackbar.LENGTH_LONG)
                     .setAction("Dismiss", null).show()
