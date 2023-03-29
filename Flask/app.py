@@ -79,8 +79,8 @@ IMPORTANT_LABELS = ['Store_name_value',
                     'Prod_price_value',
                     'Total_value']
 
-model = AutoModelForTokenClassification.from_pretrained(os.path.join(DIR,'Saved_model','all_data_4epochs'))
-processor = AutoProcessor.from_pretrained(os.path.join(DIR,'Saved_model','Processor','all_data_4epochs'), apply_ocr=False)
+model = AutoModelForTokenClassification.from_pretrained(os.path.join(DIR,'Model','all_data_4epochs'))
+processor = AutoProcessor.from_pretrained(os.path.join(DIR,'Model','Processor','all_data_4epochs'), apply_ocr=False)
 ocr_agent = lp.GCVAgent.with_credential(os.path.join(DIR,'gcv_credential.json'),languages = ['id'])
 
 @app.route('/')

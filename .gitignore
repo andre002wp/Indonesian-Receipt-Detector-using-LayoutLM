@@ -11,3 +11,9 @@ Flask/Model/all_data_4epochs/tokenizer.json
 Flask/Model/all_data_4epochs/tokenizer_config.json
 Flask/Model/all_data_4epochs/training_args.bin
 Flask/Model/all_data_4epochs/vocab.json
+Flask/Processor/all_data_4epochs/vocab.json
+Flask/Processor/all_data_4epochs/tokenizer_config.json
+Flask/Processor/all_data_4epochs/tokenizer.json
+Flask/Processor/all_data_4epochs/special_tokens_map.json
+Flask/Processor/all_data_4epochs/preprocessor_config.json
+Flask/Processor/all_data_4epochs/merges.txt
