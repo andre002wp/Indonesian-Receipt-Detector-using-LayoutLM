@@ -2,3 +2,12 @@ Saved_model
 Training_logs
 gcv_credential.json
 ReceiptDetector
+Flask/Model/all_data_4epochs/config.json
+Flask/Model/all_data_4epochs/merges.txt
+Flask/Model/all_data_4epochs/preprocessor_config.json
+Flask/Model/all_data_4epochs/pytorch_model.bin
+Flask/Model/all_data_4epochs/special_tokens_map.json
+Flask/Model/all_data_4epochs/tokenizer.json
+Flask/Model/all_data_4epochs/tokenizer_config.json
+Flask/Model/all_data_4epochs/training_args.bin
+Flask/Model/all_data_4epochs/vocab.json
