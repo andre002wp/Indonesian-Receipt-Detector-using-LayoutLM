@@ -79,9 +79,9 @@ IMPORTANT_LABELS = ['Store_name_value',
                     'Prod_price_value',
                     'Total_value']
 
-model = AutoModelForTokenClassification.from_pretrained(os.path.join(os.path.dirname(DIR),'Saved_model','all_data_4epochs'))
-processor = AutoProcessor.from_pretrained(os.path.join(os.path.dirname(DIR),'Saved_model','Processor','all_data_4epochs'), apply_ocr=False)
-ocr_agent = lp.GCVAgent.with_credential(os.path.join(os.path.dirname(DIR),'gcv_credential.json'),languages = ['id'])
+model = AutoModelForTokenClassification.from_pretrained(os.path.join(DIR,'Saved_model','all_data_4epochs'))
+processor = AutoProcessor.from_pretrained(os.path.join(DIR,'Saved_model','Processor','all_data_4epochs'), apply_ocr=False)
+ocr_agent = lp.GCVAgent.with_credential(os.path.join(DIR,'gcv_credential.json'),languages = ['id'])
 
 @app.route('/')
 def index():
@@ -99,7 +99,7 @@ def detect():
         # Convert RGB to BGR 
         cv_img = cv_img[:, :, ::-1].copy()
 
-        path = os.path.join(os.path.dirname(DIR),'android_img.jpg')
+        path = os.path.join(DIR,'android_img.jpg')
         cv2.imwrite(path, cv_img)
 
         inf_img,img_info = process_image(model, processor,filepath = path)
@@ -110,9 +110,6 @@ def detect():
         inf_img.save(img_byte_arr, format='jpeg')
         img_byte_arr = img_byte_arr.getvalue()
         img_str = base64.b64encode(img_byte_arr).decode('utf-8')
-        
-        with open(os.path.join(os.path.dirname(DIR),'Result','imgtest','test.txt'), 'w') as f:
-            f.write(img_str)
 
         return successResponse(singleReceipt(img_info),img_str,"success")
     except Exception as e:
@@ -288,7 +285,7 @@ def process_image(model, processor,filepath = None, image = None):
             draw.text((box[0]+10, box[1]-10), text=predicted_label, fill=label2color[predicted_label], font=font)
 
     # Save for future reference
-    inf_img.save(os.path.join(os.path.dirname(DIR),"Result","Android",filename+f"_{curtime[2]}-{curtime[1]}-{curtime[0]} '{curtime[3]}.{curtime[4]}.{curtime[5]}"+'.jpg'))
+    inf_img.save(os.path.join(DIR,"Result","Android",filename+f"_{curtime[2]}-{curtime[1]}-{curtime[0]} '{curtime[3]}.{curtime[4]}.{curtime[5]}"+'.jpg'))
 
     # Beautify the info
     beautyinfo = BeautifyInfo(imginfo)
