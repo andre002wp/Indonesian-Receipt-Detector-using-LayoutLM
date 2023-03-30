@@ -5,8 +5,11 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
+import android.widget.ImageView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.release.gfg1.DBHelper
 import com.release.gfg1.Product
@@ -20,6 +23,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
+import kotlin.math.roundToInt
 
 class Scan_Preview : AppCompatActivity() {
 
@@ -28,6 +32,7 @@ class Scan_Preview : AppCompatActivity() {
     private var id = -1
     private lateinit var storage : Storage
     private lateinit var productAll : ArrayList<Product>
+    private var image: Bitmap? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,6 +51,13 @@ class Scan_Preview : AppCompatActivity() {
         val tvRemove = binding.tvRemove
         val tvSave = binding.tvSave
         var addbtn = binding.addBtn
+        var image_guidev2 = binding.imageGuidev2
+        var rvguide = binding.guideline2
+        // get screensize
+        val displaymetrics = resources.displayMetrics
+        val height = displaymetrics.heightPixels
+        image_guidev2.setGuidelinePercent((height*0.5).roundToInt().toFloat()/height.toFloat())
+        rvguide.setGuidelinePercent((height*0.55).roundToInt().toFloat()/height.toFloat())
 
         var store = intent.getStringExtra("store_name")
         var date = intent.getStringExtra("date")
@@ -76,16 +88,17 @@ class Scan_Preview : AppCompatActivity() {
         // get image from scan activity
         if (editflag == false){
             if (MainActivity.isBitmapInitialized()){
-                val image = MainActivity.result_bitmap
-                imageholder.setImageBitmap(image)
+                image = MainActivity.result_bitmap
+                imageholder.setImageBitmap(Bitmap.createScaledBitmap(image!!, image!!.width, image!!.height, false))
             }
         }
         else{
             try {
                 val imagepath = storage.getImagePath(id)
                 Log.d("storage","getting image : $imagepath")
-                val image = File(imagepath).readBytes()
-                imageholder.setImageBitmap(Bitmap.createScaledBitmap(BitmapFactory.decodeByteArray(image, 0, image.size), 1000, 1000, false))
+                val imagefile = File(imagepath).readBytes()
+                image = BitmapFactory.decodeByteArray(imagefile, 0, imagefile.size)
+                imageholder.setImageBitmap(Bitmap.createScaledBitmap(image!!, image!!.width, image!!.height, false))
             }
             catch (e: IOException){
                 Log.d("storage","image not found")
@@ -96,9 +109,13 @@ class Scan_Preview : AppCompatActivity() {
         }
 
         store_holder.setText(store)
+        store_holder.maxLines = 1
         date_holder.setText(date)
+        date_holder.maxLines = 1
         time_holder.setText(time)
-        total_holder.setText(total.toString())
+        time_holder.maxLines = 1
+        total_holder.setText(thousandSeparator(total))
+
 
         // create product adapter and set data to adapter
         products_holder.adapter = ProductAdapter(products)
@@ -112,9 +129,29 @@ class Scan_Preview : AppCompatActivity() {
         }
 
 
-//
+        imageholder.setOnClickListener(){
+            if (image != null){
+                val imagedialog = MaterialAlertDialogBuilder(this)
+                    .setView(R.layout.dialog_image)
+                imagedialog.create()
+                var dialog = imagedialog.show()
+                var bigimageHolder:ImageView = dialog.findViewById(R.id.image_dialog)!!
+                bigimageHolder.setImageBitmap(Bitmap.createScaledBitmap(image!!, image!!.width, image!!.height, false))
+            }
+        }
+
         cardRemove.setOnClickListener {
             if(editflag == true){
+                try {
+                    if(storage.isExternalStorageReadable() && storage.isExternalStorageWritable()){
+                        val filename = storage.getImagePath(id)
+                        val file = File(filename)
+                        file.delete()
+                    }
+                }
+                catch (e: IOException){
+                    Log.d("storage","image not found")
+                }
                 val db = DBHelper(this, null)
                 db.deleteReceipt(id)
                 setResult(RESULT_OK)
@@ -133,7 +170,7 @@ class Scan_Preview : AppCompatActivity() {
             val final_store = store_holder.text.toString()
             val final_date = date_holder.text.toString()
             val final_time = time_holder.text.toString()
-            val final_total = total_holder.text.toString().toInt()
+            val final_total = thousandCombiner(total_holder.text.toString())
 
             if (final_store.equals("")){Log.d("DB","Store is empty")}
             if (final_date.equals("")){Log.d("DB","Date is empty")}
@@ -142,11 +179,6 @@ class Scan_Preview : AppCompatActivity() {
 
             if (!final_store.equals("") && !final_date.equals("") && !final_time.equals("") && final_total > 0 && products.size > 0) {
                 if (editflag == true){
-                    if(storage.isExternalStorageReadable() && storage.isExternalStorageWritable()){
-                        val filename = "img/$id.png"
-                        val file = getFileStreamPath(filename)
-                        file.delete()
-                    }
                     val new_receipt = Receipt(id,final_store,final_date,final_time,final_total,products)
                     val db = DBHelper(this, null)
                     db.updateReceipt(new_receipt)
@@ -174,5 +206,12 @@ class Scan_Preview : AppCompatActivity() {
             }
         }
 
+    }
+    private fun thousandSeparator(monthspending: Int): String {
+        return monthspending.toString().reversed().chunked(3).joinToString(".").reversed()
+    }
+
+    private fun thousandCombiner(monthspending: String): Int {
+        return monthspending.replace(".","").toInt()
     }
 }

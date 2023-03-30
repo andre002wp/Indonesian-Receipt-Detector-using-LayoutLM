@@ -18,7 +18,8 @@
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/editstorename"
                 android:layout_width="match_parent"
-                android:layout_height="60dp" />
+                android:layout_height="60dp"
+                android:maxLines="1"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -31,6 +32,7 @@
                 android:id="@+id/editqty"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
+                android:maxLines="1"
                 android:text="0"/>
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -44,6 +46,7 @@
                 android:id="@+id/editprice"
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
+                android:maxLines="1"
                 android:text="0"/>
         </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>

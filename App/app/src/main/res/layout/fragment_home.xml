@@ -19,7 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="44dp"
         android:text="Selamat Datang, "
         android:textColor="@color/whiteish"
         android:textSize="24sp"
@@ -27,11 +27,25 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/changeName"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="center"
+        android:layout_marginBottom="16dp"
+        android:src="@drawable/ic_edit"
+        app:backgroundTint="@color/whiteish"
+        app:fabCustomSize="30dp"
+        app:fabSize="mini"
+        app:layout_constraintBottom_toBottomOf="@+id/tvuser"
+        app:layout_constraintStart_toEndOf="@+id/tvuser"
+        app:maxImageSize="20dp"></com.google.android.material.floatingactionbutton.FloatingActionButton>
+
     <EditText
         android:id="@+id/tvuser"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
+        android:layout_marginTop="44dp"
         android:background="@null"
         android:focusable="false"
         android:text="User"
@@ -40,15 +54,6 @@
         android:textStyle="bold"
         app:layout_constraintStart_toEndOf="@+id/tvWelcome"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/changeName"
-        android:layout_width="28dp"
-        android:layout_height="26dp"
-        android:layout_marginBottom="20dp"
-        android:backgroundTint="@color/whiteish"
-        app:layout_constraintBottom_toBottomOf="@+id/tvuser"
-        app:layout_constraintStart_toEndOf="@+id/tvuser" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView"
@@ -114,7 +119,8 @@
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="vertical"
+            android:layout_marginTop="20dp">
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rv_receipt"

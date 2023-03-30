@@ -2,6 +2,8 @@ package id.andre002wp.ReceiptScanner.Utils
 
 import android.graphics.Bitmap
 import android.os.Environment
+import android.util.Log
+import androidx.core.content.ContextCompat.getExternalFilesDirs
 import id.andre002wp.ReceiptScanner.MainActivity
 import id.andre002wp.ReceiptScanner.ui.dashboard.Scan_Preview
 import java.io.File
@@ -19,17 +21,24 @@ class Storage(mainstorage: MainActivity.Companion) {
     }
 
     fun getImagePath(id: Int): String {
-        val path = Environment.getExternalStorageDirectory().absolutePath + "/ReceiptScanner"
+        val path = MainActivity.external_dir
         val file = File(path, "image_$id.jpg")
         return file.absolutePath
     }
 
     fun saveImage(id: Int, bitmap: Bitmap): String {
         try {
-            val path = Environment.getExternalStorageDirectory().absolutePath + "/ReceiptScanner"
+            val path = MainActivity.external_dir
+            if (File(path).exists()) {
+                Log.d("Storage", "Directory $path exists")
+            }
+            else {
+                Log.d("Storage", "Directory $path does not exist making a new one")
+                File(path).mkdirs()
+            }
             val file = File(path, "image_$id.jpg")
             if (!file.exists()) {
-                file.parentFile.mkdirs()
+                Log.d("Storage", "creating new file $file")
                 file.createNewFile()
             }
             val out: OutputStream = FileOutputStream(file)

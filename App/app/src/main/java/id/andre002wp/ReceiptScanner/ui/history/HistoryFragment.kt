@@ -59,7 +59,7 @@ class HistoryFragment : Fragment(), ReceiptAdapter.EditReceiptListener {
         endDateHolder = binding.root.findViewById(R.id.endDate)
         endDateHolder.text = ""
 
-        var textTotal : TextView = binding.root.findViewById(R.id.totalsum)
+        var textTotal : TextView = binding.root.findViewById(R.id.textTotal)
 
         // value for calendar
         val today = MaterialDatePicker.todayInUtcMilliseconds()
@@ -162,7 +162,7 @@ class HistoryFragment : Fragment(), ReceiptAdapter.EditReceiptListener {
         for(receipt in receipts){
             total += receipt.total
         }
-        textTotal.text = "Rp. $total"
+        textTotal.text = "Total Belanja : Rp. ${thousandSeparator(total)}"
     }
 
     fun updateAdapter(products_holder: androidx.recyclerview.widget.RecyclerView, receipts: MutableList<Receipt>){
@@ -185,5 +185,9 @@ class HistoryFragment : Fragment(), ReceiptAdapter.EditReceiptListener {
         goToHistoryDetail.putExtra("total", item.getTotalPayment())
         goToHistoryDetail.putExtra("products", item.products)
         editResultLauncher.launch(goToHistoryDetail)
+    }
+
+    private fun thousandSeparator(monthspending: Int): String {
+        return monthspending.toString().reversed().chunked(3).joinToString(".").reversed()
     }
 }

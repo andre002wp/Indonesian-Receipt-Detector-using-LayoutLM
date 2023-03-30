@@ -40,11 +40,13 @@ class MainActivity : AppCompatActivity() {
     lateinit var dashboardFragment: DashboardFragment
     companion object {
         lateinit var result_bitmap: Bitmap
+        private lateinit var mycontext: MainActivity
         fun isBitmapInitialized(): Boolean = ::result_bitmap.isInitialized
         var storage: Storage = Storage(this)
         const val CAMERA_X_RESULT = 200
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE,Manifest.permission.READ_EXTERNAL_STORAGE)
         private const val REQUEST_CODE_PERMISSIONS = 10
+        var external_dir = ""
     }
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
@@ -53,7 +55,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
+        external_dir = ContextCompat.getExternalFilesDirs(this, null)[0].absolutePath + "/ReceiptScanner"
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         isBitmapInitialized()

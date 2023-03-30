@@ -80,7 +80,7 @@ IMPORTANT_LABELS = ['Store_name_value',
                     'Total_value']
 
 model = AutoModelForTokenClassification.from_pretrained(os.path.join(DIR,'Model','all_data_4epochs'))
-processor = AutoProcessor.from_pretrained(os.path.join(DIR,'Model','Processor','all_data_4epochs'), apply_ocr=False)
+processor = AutoProcessor.from_pretrained(os.path.join(DIR,'Processor','all_data_4epochs'), apply_ocr=False)
 ocr_agent = lp.GCVAgent.with_credential(os.path.join(DIR,'gcv_credential.json'),languages = ['id'])
 
 @app.route('/')
@@ -95,7 +95,8 @@ def detect():
         bytearrimg = decodeB64(data)
         byteimg = bytearray(bytearrimg)
         pil_image = Image.open(io.BytesIO(byteimg))
-        cv_img = np.array(pil_image) 
+        cv_img = np.array(pil_image)
+
         # Convert RGB to BGR 
         cv_img = cv_img[:, :, ::-1].copy()
 
@@ -104,8 +105,6 @@ def detect():
 
         inf_img,img_info = process_image(model, processor,filepath = path)
         img_info = reformatInfo(img_info)
-
-        inf_img = inf_img.resize((int(inf_img.width/2),int(inf_img.height/2)))
         img_byte_arr = io.BytesIO()
         inf_img.save(img_byte_arr, format='jpeg')
         img_byte_arr = img_byte_arr.getvalue()
@@ -228,6 +227,7 @@ def process_image(model, processor,filepath = None, image = None):
     else:
         AssertionError("No image or filepath provided")
         return
+    
 
     # Generating Receipt Info
     imginfo = {}
@@ -239,9 +239,17 @@ def process_image(model, processor,filepath = None, image = None):
 
     if image_result is None:
         return None
+    
+    # convert inference with contrast enhancement 
+    lab= cv2.cvtColor(image_result, cv2.COLOR_BGR2LAB)
+    l_channel, a, b = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+    cl = clahe.apply(l_channel)
+    limg = cv2.merge((cl,a,b))
+    enhanced_img = cv2.cvtColor(limg, cv2.COLOR_LAB2BGR)
 
     height, width, _ = image_result.shape
-    res = ocr_agent.detect(image_result, return_response=True)
+    res = ocr_agent.detect(enhanced_img, return_response=True)
     texts  = ocr_agent.gather_text_annotations(res)
     
     inference_words = []
@@ -301,6 +309,9 @@ def process_image(model, processor,filepath = None, image = None):
 
     if (len(beautyinfo["Products"])//2) > mostGreenFlag:
         print("Trying other Layout")
+
+        # save the original layout
+        mostTrueProducts = beautyinfo['Products'].copy()
         
         
         # 2nd method for getting products
@@ -620,4 +631,4 @@ def badRequest(values,message='error'):
     return make_response(jsonify(res), 400)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=8080)

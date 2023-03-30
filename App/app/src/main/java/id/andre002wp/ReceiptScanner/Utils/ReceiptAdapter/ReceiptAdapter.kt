@@ -64,7 +64,7 @@ class ReceiptAdapter(private val dataSet: ArrayList<Receipt>, private var onEdit
         viewHolder.store_name.text = dataSet[position].getStoreName()
         viewHolder.dateholder.text = dataSet[position].getPurchaseDate()
         viewHolder.timeholder.text = dataSet[position].getPurchaseTime()
-        viewHolder.total.text = dataSet[position].getTotalPayment().toString()
+        viewHolder.total.text = thousandSeparator(dataSet[position].getTotalPayment())
         if(storage.isExternalStorageReadable()){
             try {
                 val imagepath = storage.getImagePath(dataSet[position].getID())
@@ -115,6 +115,10 @@ class ReceiptAdapter(private val dataSet: ArrayList<Receipt>, private var onEdit
 
     public interface EditReceiptListener {
         fun onEditReceipt(item: Receipt)
+    }
+
+    private fun thousandSeparator(monthspending: Int): String {
+        return monthspending.toString().reversed().chunked(3).joinToString(".").reversed()
     }
 }
 

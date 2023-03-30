@@ -51,7 +51,7 @@ class ProductAdapter (private val dataSet: ArrayList<Product>) : RecyclerView.Ad
             // contents of the view with that element
             viewHolder.name.text = dataSet[position].getProductName()
             viewHolder.qty.text = dataSet[position].getQtyString()
-            viewHolder.price.text = dataSet[position].getPriceString()
+            viewHolder.price.text = thousandSeparator(dataSet[position].getPriceString().toInt())
             viewHolder.deleteBtn.setOnClickListener {
                 dataSet.removeAt(position)
                 notifyDataSetChanged()
@@ -94,5 +94,13 @@ class ProductAdapter (private val dataSet: ArrayList<Product>) : RecyclerView.Ad
 
     // Return the size of your dataset (invoked by the layout manager)
         override fun getItemCount() = dataSet.size
+
+    private fun thousandSeparator(monthspending: Int): String {
+        return monthspending.toString().reversed().chunked(3).joinToString(".").reversed()
+    }
+
+    private fun thousandCombiner(monthspending: String): Int {
+        return monthspending.replace(".","").toInt()
+    }
 }
 

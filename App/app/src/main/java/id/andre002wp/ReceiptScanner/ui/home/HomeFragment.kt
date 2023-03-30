@@ -2,6 +2,7 @@ package id.andre002wp.ReceiptScanner.ui.home
 
 import android.app.Activity
 import android.content.Intent
+import android.icu.number.NumberFormatter
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -21,6 +22,7 @@ import id.andre002wp.ReceiptScanner.Utils.ReceiptAdapter.ReceiptAdapter
 import id.andre002wp.ReceiptScanner.databinding.FragmentHomeBinding
 import id.andre002wp.ReceiptScanner.ui.dashboard.Scan_Preview
 import java.time.LocalDate
+import java.time.Month
 import java.time.format.DateTimeFormatter
 
 class HomeFragment : Fragment(), ReceiptAdapter.EditReceiptListener {
@@ -64,12 +66,12 @@ class HomeFragment : Fragment(), ReceiptAdapter.EditReceiptListener {
         }
 
         month_receipts = getMonthReceipts(dbrev)
-        tvMonth.text = "Receipts history for ${convertedDate.getMonth()}"
+        tvMonth.text = "History transaksi bulan ${indonesianMonth(convertedDate.month.toString())} ${convertedDate.year}"
         var monthspending = 0
         for (receipt in month_receipts){
             monthspending += receipt.getTotalPayment()
         }
-        tv_total.text = "Rp. $monthspending"
+        tv_total.text = "Rp. ${thousandSeparator(monthspending)}"
         rv_receipt.adapter = ReceiptAdapter(month_receipts,this)
         rv_receipt.layoutManager = LinearLayoutManager(this.requireContext())
 
@@ -93,6 +95,50 @@ class HomeFragment : Fragment(), ReceiptAdapter.EditReceiptListener {
         }
 
         return root
+    }
+
+    private fun thousandSeparator(monthspending: Int): String {
+        return monthspending.toString().reversed().chunked(3).joinToString(".").reversed()
+    }
+
+    private fun indonesianMonth(toString: String): String {
+        if(toString.lowercase().equals("january")){
+            return "Januari"
+        }
+        if(toString.lowercase().equals("february")){
+            return "Februari"
+        }
+        if(toString.lowercase().equals("march")){
+            return "Maret"
+        }
+        if(toString.lowercase().equals("april")){
+            return "April"
+        }
+        if(toString.lowercase().equals("may")){
+            return "Mei"
+        }
+        if(toString.lowercase().equals("june")){
+            return "Juni"
+        }
+        if(toString.lowercase().equals("july")){
+            return "Juli"
+        }
+        if(toString.lowercase().equals("august")){
+            return "Agustus"
+        }
+        if(toString.lowercase().equals("september")){
+            return "September"
+        }
+        if(toString.lowercase().equals("october")){
+            return "Oktober"
+        }
+        if(toString.lowercase().equals("november")){
+            return "November"
+        }
+        if(toString.lowercase().equals("december")){
+            return "Desember"
+        }
+        return toString
     }
 
     private fun getMonthReceipts(dbrev:DBHelper): ArrayList<Receipt> {

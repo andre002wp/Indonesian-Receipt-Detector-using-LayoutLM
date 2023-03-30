@@ -47,10 +47,12 @@
                 <ImageView
                     android:id="@+id/imageView2"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:src="@drawable/ic_scan_foreground"
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_gallery"
                     app:layout_constraintTop_toTopOf="parent"
-                    tools:layout_editor_absoluteX="0dp" />
+                    tools:layout_editor_absoluteX="0dp"
+                    android:layout_marginHorizontal="15dp"
+                    android:layout_marginTop="10dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -84,9 +86,11 @@
                 <ImageView
                     android:id="@+id/imageView3"
                     android:layout_width="match_parent"
-                    android:layout_height="50dp"
-                    android:src="@drawable/ic_scan_foreground"
-                    app:layout_constraintTop_toTopOf="parent" />
+                    android:layout_height="40dp"
+                    android:src="@drawable/ic_takephoto"
+                    app:layout_constraintTop_toTopOf="parent"
+                    android:layout_marginHorizontal="15dp"
+                    android:layout_marginTop="10dp"/>
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -106,14 +110,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_begin="205dp" />
-
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideline9"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            app:layout_constraintGuide_begin="1dp" />
+            app:layout_constraintGuide_percent="0.5" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </LinearLayout>

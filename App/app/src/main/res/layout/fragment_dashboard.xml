@@ -6,15 +6,50 @@
     android:layout_height="match_parent"
     tools:context=".ui.dashboard.DashboardFragment">
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/image_guideh1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.08" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/image_guideh2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintGuide_percent="0.93" />
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/image_guidev1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.06" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/image_guidev2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minHeight="600dp"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.71" />
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/image_guidev3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minHeight="600dp"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.75" />
+
     <androidx.cardview.widget.CardView
         android:id="@+id/cardHolder1"
-        android:layout_width="350dp"
-        android:layout_height="500dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         app:cardCornerRadius="30dp"
-        android:layout_marginTop="20dp">
+        app:layout_constraintBottom_toTopOf="@+id/image_guidev2"
+        app:layout_constraintEnd_toStartOf="@+id/image_guideh2"
+        app:layout_constraintStart_toStartOf="@+id/image_guideh1"
+        app:layout_constraintTop_toTopOf="@+id/image_guidev1">
 
         <ImageView
             android:id="@+id/scanImage"
@@ -27,24 +62,23 @@
 
     <LinearLayout
         android:id="@+id/linearLayout"
-        android:layout_width="409dp"
-        android:layout_height="129dp"
-        android:layout_marginTop="2dp"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cardHolder1"
+        app:layout_constraintEnd_toStartOf="@+id/image_guideh2"
+        app:layout_constraintStart_toStartOf="@+id/image_guideh1"
+        app:layout_constraintTop_toTopOf="@+id/image_guidev3"
         app:layout_constraintVertical_bias="0.29">
 
         <Button
             android:id="@+id/scanBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
             android:layout_weight="1"
             android:backgroundTint="@color/lighter_blue"
-            android:text="Start Scan"
-            android:layout_marginHorizontal="20dp"/>
+            android:text="Start Scan" />
 
     </LinearLayout>
 

@@ -1,0 +1,8 @@
+# fly.toml file generated for receipt-detector on 2023-03-29T23:01:28+08:00
+
+app = "receipt-detector"
+kill_timeout = 0
+primary_region = "sin"
+
+[build]
+  image = "andre002wp/receipt-detector"

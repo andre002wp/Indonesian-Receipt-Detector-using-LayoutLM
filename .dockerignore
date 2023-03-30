@@ -1,0 +1,54 @@
+# flyctl launch added from .gitignore
+**\Saved_model
+**\Training_logs
+**\gcv_credential.json
+**\ReceiptDetector
+**\Flask\Model\all_data_4epochs\config.json
+**\Flask\Model\all_data_4epochs\merges.txt
+**\Flask\Model\all_data_4epochs\preprocessor_config.json
+**\Flask\Model\all_data_4epochs\pytorch_model.bin
+**\Flask\Model\all_data_4epochs\special_tokens_map.json
+**\Flask\Model\all_data_4epochs\tokenizer.json
+**\Flask\Model\all_data_4epochs\tokenizer_config.json
+**\Flask\Model\all_data_4epochs\training_args.bin
+**\Flask\Model\all_data_4epochs\vocab.json
+**\Flask\Processor\all_data_4epochs\vocab.json
+**\Flask\Processor\all_data_4epochs\tokenizer_config.json
+**\Flask\Processor\all_data_4epochs\tokenizer.json
+**\Flask\Processor\all_data_4epochs\special_tokens_map.json
+**\Flask\Processor\all_data_4epochs\preprocessor_config.json
+**\Flask\Processor\all_data_4epochs\merges.txt
+
+# flyctl launch added from .idea\.gitignore
+# Default ignored files
+.idea\shelf
+.idea\workspace.xml
+
+# flyctl launch added from App\.gitignore
+App\**\*.iml
+App\**\.gradle
+App\local.properties
+App\.idea\caches
+App\.idea\libraries
+App\.idea\modules.xml
+App\.idea\workspace.xml
+App\.idea\navEditor.xml
+App\.idea\assetWizardSettings.xml
+App\**\.DS_Store
+App\build
+App\captures
+App\**\.externalNativeBuild
+App\**\.cxx
+App\**\local.properties
+
+# flyctl launch added from App\.idea\.gitignore
+# Default ignored files
+App\.idea\shelf
+App\.idea\workspace.xml
+
+# flyctl launch added from App\app\.gitignore
+App\app\build
+
+# flyctl launch added from App\app\scanlibrary\.gitignore
+App\app\scanlibrary\build
+fly.toml
