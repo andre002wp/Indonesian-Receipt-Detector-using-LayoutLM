@@ -17,6 +17,7 @@ import base64
 import io
 import time
 import regex as re
+from date_extractor import extract_dates
 
 DIR = os.getcwd()
 if DIR == "D:\Andre\TA\Indonesian-Receipt-Detector-using-LayoutLM":
@@ -156,10 +157,20 @@ def reformatInfo(info):
         else:
             item['price'] = 0
 
-        if len(item['quantity']) > 0:
-            item['quantity'] = int(item['quantity'].replace(",",".").split('.')[0])
-        else:
-            item['quantity'] = 0
+        try:
+            if len(item['quantity']) > 0:
+                item['quantity'] = int(item['quantity'].replace(",",".").split('.')[0])
+            else:
+                item['quantity'] = 0
+        except:
+            try:
+                match_q = re.match(r"([0-9])", beautyinfo['Products'][0]['quantity'])
+                if match_q:
+                    item['quantity'] = match_q.group(1)
+                else:
+                    item['quantity'] = 0
+            except:
+                item['quantity'] = 0
 
         products[len(products)] = item
 
@@ -261,9 +272,22 @@ def process_image(model, processor,filepath = None, image = None):
         h = np.min(words_bbox.block.points, axis=0)
         w = np.max(words_bbox.block.points, axis=0)
         inference_boxes.append([h[0],h[1],w[0],w[1]])
+        
+    normalizebox = [normalize_box(box, (height, width)) for box in inference_boxes]
+    fixed_boxes = []
+    for box in normalizebox:
+        if box[0] < 0:
+            box[0] = 1
+        if box[1] < 0:
+            box[1] = 1
+        if box[2] > 1000:
+            box[2] = 999
+        if box[3] > 1000:
+            box[3] = 999
+        fixed_boxes.append(box)
 
     inf_img = Image.fromarray(image_result)
-    inf_words, inf_bboxes = inference_words, [normalize_box(box, (height, width)) for box in inference_boxes]
+    inf_words, inf_bboxes = inference_words, fixed_boxes
 
     # encode
     # encoding = processor(image, truncation=True, return_offsets_mapping=True, return_tensors="pt")
@@ -398,6 +422,20 @@ def process_image(model, processor,filepath = None, image = None):
         print(beautyinfo)
         raise Exception("The info is not correct")
     else:
+        # remove products that have 1 info only
+        pop_idx = []
+        for key,prod_item in beautyinfo["Products"].items():
+            trueval = 0
+            if len(prod_item["name"]) > 0:
+                trueval += 1
+            if len(prod_item['quantity']) > 0:
+                trueval += 1
+            if len(prod_item['price']) > 0:
+                trueval += 1
+            if trueval < 2:
+                pop_idx.append(key)
+        for key in pop_idx:
+            beautyinfo["Products"].pop(key)
         return inf_img,beautyinfo
 
 
@@ -439,7 +477,7 @@ def checkPredictedLabels(info,predicted_labels,box,words):
     mid_y = int(box[1]+(box[3]-box[1]))
 
     box_tolerance = abs(int(box[3]-box[1])) # 10 pixels ? | auto tolerance
-    # check if the box is already in the info dict with some tolerance
+    # check if the box for products is already in the info dict with some tolerance
     if info["Products"].keys() is not None:
         if len(info["Products"].keys()) < 1:
             tolerated_box = mid_y
@@ -462,7 +500,7 @@ def checkPredictedLabels(info,predicted_labels,box,words):
     else:
         tolerated_box = mid_y
 
-    # check if the box is already in the info dict with some tolerance
+    # check if the box for total is already in the info dict with some tolerance
     if info["Total"].keys() is not None:
         if len(info["Total"].keys()) < 1:
             tolerated_total = mid_y
@@ -515,11 +553,14 @@ def checkPredictedLabels(info,predicted_labels,box,words):
 def BeautifyInfo(imginfo):
     newinfo = {}
     newinfo["Store"] = "".join(imginfo["Store"])
-    newinfo["Store"] = newinfo["Store"][1:]
+    if (len(newinfo["Store"]) > 0 and newinfo["Store"][0] == " "): # remove the first space
+        newinfo["Store"] = newinfo["Store"][1:]
     newinfo["Date"] = "".join(imginfo["Date"])
-    newinfo["Date"] = newinfo["Date"][1:]
+    if (len(newinfo["Date"]) > 0 and newinfo["Date"][0] == " "): # remove the first space
+        newinfo["Date"] = newinfo["Date"][1:]
     newinfo["Time"] = "".join(imginfo["Time"])
-    newinfo["Time"] = newinfo["Time"][1:]
+    if (len(newinfo["Time"]) > 0 and newinfo["Time"][0] == " "): # remove the first space
+        newinfo["Time"] = newinfo["Time"][1:]
     try:
         newinfo["Total"] = "".join(list(imginfo["Total"].values())[0]['total'])
     except:
@@ -529,16 +570,19 @@ def BeautifyInfo(imginfo):
     for idx,item in enumerate(imginfo["Products"].values()):
         newinfo["Products"][idx] = {}
         newinfo["Products"][idx]["name"] = "".join(item["name"])
-        newinfo["Products"][idx]["name"] = newinfo["Products"][idx]["name"][1:]
+        if len(newinfo["Products"][idx]["name"]) > 0 and newinfo["Products"][idx]["name"][0] == " ": # remove the first space
+            newinfo["Products"][idx]["name"] = newinfo["Products"][idx]["name"][1:]
         newinfo["Products"][idx]["quantity"] = "".join(item["quantity"])
-        newinfo["Products"][idx]["quantity"] = newinfo["Products"][idx]["quantity"][1:]
+        if len(newinfo["Products"][idx]["quantity"]) > 0 and newinfo["Products"][idx]["quantity"][0] == " ": # remove the first space
+            newinfo["Products"][idx]["quantity"] = newinfo["Products"][idx]["quantity"][1:]
         newinfo["Products"][idx]["price"] = "".join(item["price"])
-        newinfo["Products"][idx]["price"] = newinfo["Products"][idx]["price"][1:]
+        if len(newinfo["Products"][idx]["price"]) > 0 and newinfo["Products"][idx]["price"][0] == " ": # remove the first space
+            newinfo["Products"][idx]["price"] = newinfo["Products"][idx]["price"][1:]
 
     datetime_regex = [
         r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{4})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-2020-12:00 # ex Toosi
         r"^([0-9]{4})-([0-9]{1,2})-([0-9]{1,2})-([0-9]{1,2}:[0-9]{1,2})", # 2020-01-01-12:00
-        r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-20-12:00
+        r"^([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}:[0-9]{1,2})", # 01-01-20-12:00 CK
         r"([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}-:[0-9]{1,2})", # 01-01-20-12-:00 # ex indomaret
         r"([0-9]{1,2})-([0-9]{1,2})-([0-9]{2})-([0-9]{1,2}-[0-9]{1,2})" # 01-01-20-12-00 # ex KOVFEE
     ]
@@ -561,21 +605,32 @@ def BeautifyInfo(imginfo):
         newinfo['Date'] = match.group(1)+"-"+match.group(2)+"-"+match.group(3)
         newinfo['Time'] = match.group(4)
     elif match_idx == 2:
-        newinfo['Date'] = match.group(3)+"-"+match.group(2)+"-20"+match.group(1)
+        newinfo['Date'] = "20"+match.group(3)+"-"+match.group(2)+"-"+match.group(1)
         newinfo['Time'] = match.group(4)
     elif match_idx == 3:
-        newinfo['Date'] = match.group(3)+"-"+match.group(2)+"-20"+match.group(1)
+        newinfo['Date'] = "20"+match.group(3)+"-"+match.group(2)+"-"+match.group(1)
         newinfo['Time'] = match.group(4).replace("-","")
     elif match_idx == 4:
-        newinfo['Date'] = "20"+match.group(3)+"-"+match.group(2)+match.group(1)
+        newinfo['Date'] = "20"+match.group(3)+"-"+match.group(2)+"-"+match.group(1)
         newinfo['Time'] = match.group(4).replace("-",":")
     else:
         print("No match found")
         print(datetime_str)
         try:
-            newinfo['Date'] = newinfo['Date'].replace("/","-").replace(".","-").replace(" ","").replace(",","-").replace(".","-")
-            while newinfo['Date'][-1] not in ["0","1","2","3","4","5","6","7","8","9"]:
-                newinfo['Date'] = newinfo['Date'][:-1]
+            newinfo['Date'] = newinfo['Date'].replace("-","/").replace(".","/").replace(" ","").replace(",","/").replace(".","/")
+
+            dateread = extract_dates(newinfo['Date'])
+            ymd = {'year':0,'month':0,'day':0}
+            for it in dateread:
+                if(it.year > ymd['year']):
+                    ymd['year'] = it.year
+                if(it.month > ymd['month']):
+                    ymd['month'] = it.month
+                if(it.day > ymd['day']):
+                    ymd['day'] = it.day
+
+            newinfo["Time"] = f"{ymd['year']}-{ymd['month']:02d}-{ymd['day']:02d}"
+
             newinfo['Time'] = newinfo['Time'].replace("/","-").replace(".","-").replace(" ","").replace(",","-").replace(".","-")
             while newinfo['Time'][-1] not in ["0","1","2","3","4","5","6","7","8","9"]:
                 newinfo['Time'] = newinfo['Time'][:-1]

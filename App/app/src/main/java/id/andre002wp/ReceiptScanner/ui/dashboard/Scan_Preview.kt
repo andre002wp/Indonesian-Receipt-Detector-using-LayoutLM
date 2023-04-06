@@ -56,8 +56,6 @@ class Scan_Preview : AppCompatActivity() {
         // get screensize
         val displaymetrics = resources.displayMetrics
         val height = displaymetrics.heightPixels
-        image_guidev2.setGuidelinePercent((height*0.5).roundToInt().toFloat()/height.toFloat())
-        rvguide.setGuidelinePercent((height*0.55).roundToInt().toFloat()/height.toFloat())
 
         var store = intent.getStringExtra("store_name")
         var date = intent.getStringExtra("date")

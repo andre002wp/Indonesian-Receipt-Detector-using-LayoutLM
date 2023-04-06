@@ -8,6 +8,6 @@ RUN apt-get install 'ffmpeg'\
     'libsm6'\
     'libxext6'  -y
 RUN pip3 install --upgrade pip
-RUN pip install -r requirements.txt
+RUN pip --default-timeout=100 install -r requirements.txt
 EXPOSE 8080
 ENTRYPOINT ["gunicorn", "--bind=0.0.0.0:8080", "wsgi:app"]
