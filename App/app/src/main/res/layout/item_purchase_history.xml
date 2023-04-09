@@ -24,8 +24,7 @@
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/receipt_image"
                 android:layout_width="80dp"
-                android:layout_height="120dp"
-                tools:srcCompat="@tools:sample/avatars" />
+                android:layout_height="120dp" />
 
             <TextView
                 android:id="@+id/idplaceholder"
