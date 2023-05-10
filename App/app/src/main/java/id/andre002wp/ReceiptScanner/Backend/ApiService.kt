@@ -15,7 +15,21 @@ interface ApiService {
     fun uploadImage(
         @Body base64img: String
     ): Call<FileUploadResponse>
+
+    @POST("ping")
+    fun pingServer(
+    ): Call<PingServer>
 }
+
+class PingServer(
+    @field:SerializedName("error")
+    @Expose
+    val status: Boolean,
+
+    @field:SerializedName("message")
+    @Expose
+    val message: String
+)
 
 class FileUploadResponse(
     @field:SerializedName("data")

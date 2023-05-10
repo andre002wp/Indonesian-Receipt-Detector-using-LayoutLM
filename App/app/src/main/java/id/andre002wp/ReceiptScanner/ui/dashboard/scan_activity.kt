@@ -20,7 +20,10 @@ import com.release.gfg1.Product
 import com.websitebeaver.documentscanner.DocumentScanner
 import com.websitebeaver.documentscanner.constants.ResponseType
 import id.andre002wp.ReceiptScanner.Backend.ApiConfig.Companion.getApiService
+import id.andre002wp.ReceiptScanner.Backend.ApiConfig.Companion.getBackupApiService
+import id.andre002wp.ReceiptScanner.Backend.ApiService
 import id.andre002wp.ReceiptScanner.Backend.FileUploadResponse
+import id.andre002wp.ReceiptScanner.Backend.PingServer
 import id.andre002wp.ReceiptScanner.R
 import retrofit2.Call
 import retrofit2.Callback
@@ -119,62 +122,7 @@ class scan_activity : AppCompatActivity() {
             val byteimg = byteArrayOutputStream.toByteArray()
             val encodedimg = Base64.encodeToString(byteimg, Base64.DEFAULT)
 
-            val service = getApiService().uploadImage(encodedimg)
-
-            service.enqueue(object : Callback<FileUploadResponse> {
-                override fun onResponse(
-                    call: Call<FileUploadResponse>,
-                    response: Response<FileUploadResponse>
-                ) {
-                    if (response.isSuccessful) {
-                        Toast.makeText(
-                            applicationContext,
-                            "Success",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                        val scan_data = response.body()?.data
-//                        Log.d("API", scan_data!!?.store_name)
-//                        Log.d("API", scan_data!!?.date)
-//                        Log.d("API", scan_data!!?.time)
-//                        Log.d("API", scan_data!!?.total.toString())
-                        val products = ArrayList<Product>()
-                        for (i in scan_data!!?.products){
-                            val new_product = Product(i.name, i.price, i.quantity)
-                            products.add(new_product)
-//                            Log.d("API", i.name)
-//                            Log.d("API", i.price.toString())
-//                            Log.d("API", i.quantity.toString())
-                        }
-//                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
-//                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
-                        Intent(this@scan_activity, Scan_Preview::class.java).also {
-                            it.putExtra("editflag", false)
-                            it.putExtra("store_name", scan_data!!?.store_name)
-                            it.putExtra("date", scan_data!!?.date)
-                            it.putExtra("time", scan_data!!?.time)
-                            it.putExtra("total", scan_data!!?.total)
-                            it.putExtra("products", products)
-                            startActivity(it)
-                        }
-                        finish()
-                    } else {
-                        Toast.makeText(
-                            applicationContext,
-                            response.message().toString(),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                }
-
-                override fun onFailure(call: Call<FileUploadResponse>, t: Throwable) {
-                    Log.e("cek", "" + t.message)
-                    Toast.makeText(
-                        applicationContext,
-                        "Cannot instance Retrofit",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            })
+            sendAPI(encodedimg)
         } else {
             Toast.makeText(
                 applicationContext,
@@ -182,5 +130,75 @@ class scan_activity : AppCompatActivity() {
                 Toast.LENGTH_SHORT
             ).show()
         }
+    }
+
+    fun sendAPI(encodedimg: String, mainAPIflag: Boolean = true){
+        var server: ApiService? = null
+        if (mainAPIflag) {
+            server = getApiService()
+        }
+        else{
+            server = getBackupApiService()
+        }
+        val service = server.uploadImage(encodedimg)
+        service.enqueue(object : Callback<FileUploadResponse> {
+            override fun onResponse(
+                call: Call<FileUploadResponse>,
+                response: Response<FileUploadResponse>
+            ) {
+                if (response.isSuccessful) {
+                    Toast.makeText(
+                        applicationContext,
+                        "Success",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    val scan_data = response.body()?.data
+                    //                        Log.d("API", scan_data!!?.store_name)
+                    //                        Log.d("API", scan_data!!?.date)
+                    //                        Log.d("API", scan_data!!?.time)
+                    //                        Log.d("API", scan_data!!?.total.toString())
+                    val products = ArrayList<Product>()
+                    for (i in scan_data!!?.products) {
+                        val new_product = Product(i.name, i.price, i.quantity)
+                        products.add(new_product)
+                        //                            Log.d("API", i.name)
+                        //                            Log.d("API", i.price.toString())
+                        //                            Log.d("API", i.quantity.toString())
+                    }
+                    //                        var b64decoded = Base64.decode(response.body()?.image, Base64.DEFAULT)
+                    //                        result_bitmap = BitmapFactory.decodeByteArray(b64decoded, 0, b64decoded.size)
+                    Intent(this@scan_activity, Scan_Preview::class.java).also {
+                        it.putExtra("editflag", false)
+                        it.putExtra("store_name", scan_data!!?.store_name)
+                        it.putExtra("date", scan_data!!?.date)
+                        it.putExtra("time", scan_data!!?.time)
+                        it.putExtra("total", scan_data!!?.total)
+                        it.putExtra("products", products)
+                        startActivity(it)
+                    }
+                    finish()
+                } else {
+                    Toast.makeText(
+                        applicationContext,
+                        response.message().toString(),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+
+            override fun onFailure(call: Call<FileUploadResponse>, t: Throwable) {
+//                if (mainAPIflag){
+//                    sendAPI(encodedimg, false)
+//                }
+//                else{
+                Log.e("cek", "" + t.message)
+                Toast.makeText(
+                    applicationContext,
+                    "Cannot instance Retrofit",
+                    Toast.LENGTH_SHORT
+                ).show()
+//                }
+            }
+        })
     }
 }

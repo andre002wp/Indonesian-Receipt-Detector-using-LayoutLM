@@ -89,6 +89,14 @@ def index():
     # inf_img,img_info = process_image(model, processor, filepath = os.path.join(os.path.dirname(DIR),'Nota_Segmented/20221123_230906.jpg'))
     return "<p>Hello, World!</p>"
 
+@app.route('/ping')
+def ping():
+    response = {
+        "status": "True",
+        "message": "pong!"
+    }
+    return make_response(jsonify(response), 200)
+
 @app.route('/detect', methods=['POST'])
 def detect():
     try:
