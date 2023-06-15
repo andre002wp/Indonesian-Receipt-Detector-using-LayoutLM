@@ -1,0 +1,38 @@
+Train
+Ayam Goreng Prambanan 1
+Starbucks 1
+Twisterdog 2
+indomaret 38
+Outschool Store 1
+Joy Victoria 1
+Wulan Busana 1
+Alfamart 5
+RamenYa 1
+Mie Gacoan 2
+Kusuma Makmur 1
+Dewa Dewi Collection 1
+SAS Mart 2
+Mixue 5
+Komugi Bakery 1
+Mc Donald 1
+Tije Mart 1
+UD Manik Galih 1
+Circle K 7
+Toosi 5
+Apotik Anugrah 1
+Puri Sosis 1
+Total = 80
+
+Test
+Mixue 1
+Bakso Solo 1
+Outschool Store 1
+Kusuma Makmur 1
+indomaret 6
+Frozen 1
+Warung Bakso Herman 1
+Circle K 4
+Alfamart 1
+Toosi 2
+Apotik Sumber Farma 1
+Total = 20

@@ -47,7 +47,7 @@ class ApiConfig {
                 .connectTimeout(15, TimeUnit.SECONDS)
                 .addInterceptor(loggingInterceptor)
                 .build()
-            val retrofit = Retrofit.Builder().baseUrl("http://192.168.18.7:8080/")
+            val retrofit = Retrofit.Builder().baseUrl("http://192.168.191.1:8080/")
                 .addConverterFactory(GsonConverterFactory.create()).client(client).build()
             return retrofit.create(ApiService::class.java)
         }
